@@ -1,4 +1,3 @@
-import e from "express";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError"
 
@@ -18,7 +17,7 @@ const createUser = async (name: string, username: string, email: string, passwor
         // check if entered email is valid or not
         else if (!emailRegex.test(email)) {
             throw new ApiError(400, "Please enter a valid email!");
-        } 
+        }
         else {
             // check if the user exists with the username or email
             let user = await User.findOne({
@@ -28,23 +27,23 @@ const createUser = async (name: string, username: string, email: string, passwor
             // throw error if the user exists
             if (user) {
                 throw new ApiError(400, "Username or email already in use!");
-            } 
+            }
             // check if password & confirm passwords match
             else if (password !== cpassword) {
 
                 throw new ApiError(400, "Passwords do not match!");
-            } 
-            else {  
+            }
+            else {
                 // create the new user
                 user = new User({ name, username, email, password });
-                
+
                 // save the user
                 await user.save();
-                
+
                 // generate the access & refresh tokens
                 const accessToken = user.generateAccessToken();
                 const refreshToken = user.generateRefreshToken();
-                
+
                 // return the access & refresh tokens
                 return { accessToken, refreshToken };
             }
@@ -52,4 +51,42 @@ const createUser = async (name: string, username: string, email: string, passwor
     }
 }
 
-export const userService = { createUser };
+const loginUser = async (identifier: string, password: string) => {
+    // check for empty fields
+    if (!identifier || !password) {
+        throw new ApiError(400, "All fields are required!");
+    } else {
+        let user;
+
+        // check if whether the identifier matches the email or username
+        const usernameRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9]+$/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g;
+
+        if (usernameRegex.test(identifier)) {
+            user = await User.findOne({ username: identifier }).select("+password");
+        } else if (emailRegex.test(identifier)) {
+            user = await User.findOne({ email: identifier }).select("+password");
+        }
+
+        // check if the match for the user was found or not
+        if (!user) {
+            throw new ApiError(404, "User does not exist!");
+        } else {
+            // if the user was found, check for the password
+            const isCorrectPassword = await user.verifyPassword(password);
+
+            if (isCorrectPassword) {
+                // generate the access & refresh tokens
+                const accessToken = user.generateAccessToken();
+                const refreshToken = user.generateRefreshToken();
+
+                // return the access & refresh tokens
+                return { accessToken, refreshToken };
+            } else {
+                throw new ApiError(400, "Invalid password!")
+            }
+        }
+    }
+}
+
+export const userService = { createUser, loginUser };

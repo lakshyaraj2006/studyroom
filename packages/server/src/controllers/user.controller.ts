@@ -33,4 +33,34 @@ const createUser = async (req: Request, res: Response) => {
     }
 }
 
-export const userController = { createUser };
+const loginUser = async (req: Request, res: Response) => {
+    try {
+        const { identifier, password } = req.body;
+
+        const { accessToken, refreshToken } = await userService.loginUser(identifier, password);
+
+        // set the refresh token as a cookie
+        res.cookie('refreshtoken', refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production"
+        });
+
+        // return the api response
+        return res
+            .status(201)
+            .json(new ApiResponse(200, { accessToken }, "Logged in successfully!"));
+    } catch (error) {
+        if (error instanceof ApiError) {
+            return res
+                .status(error.statusCode)
+                .json(new ApiResponse(error.statusCode, null, error.message));
+        } else {
+            return res
+                .status(500)
+                .json(new ApiResponse(500, (error as any).message));
+        }
+    }
+}
+
+export const userController = { createUser, loginUser };
