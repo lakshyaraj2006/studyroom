@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError"
 
@@ -89,4 +90,19 @@ const loginUser = async (identifier: string, password: string) => {
     }
 }
 
-export const userService = { createUser, loginUser };
+const logoutUser = (req: Request, res: Response) => {
+    // Extract cookies
+    const cookies = req.cookies;
+
+    // check if the cookie named "refreshtoken" is present or not
+    if (cookies['refreshtoken']) {
+        // if present, clear & return true
+        res.clearCookie('refreshtoken');
+        return true;
+    } else {
+        // throw 401 unauthorized error
+        throw new ApiError(401, "Unauthorized access!")
+    }
+}
+
+export const userService = { createUser, loginUser, logoutUser };
