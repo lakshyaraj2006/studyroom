@@ -83,4 +83,32 @@ const logoutUser = (req: Request, res: Response) => {
     }
 }
 
-export const userController = { createUser, loginUser, logoutUser };
+const rotateAccessAndRefreshTokens = async (req: Request, res: Response) => {
+    try {
+        const { accessToken, refreshToken } = await userService.rotateAccessAndRefreshTokens(req.cookies);
+
+        // set the refresh token as a cookie
+        res.cookie('refreshtoken', refreshToken, {
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production"
+        });
+
+        // return the api response
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { accessToken }, "Tokens rotated"));
+    } catch (error) {
+        if (error instanceof ApiError) {
+            return res
+                .status(error.statusCode)
+                .json(new ApiResponse(error.statusCode, null, error.message));
+        } else {
+            return res
+                .status(500)
+                .json(new ApiResponse(500, (error as any).message));
+        }
+    }
+}
+
+export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens };

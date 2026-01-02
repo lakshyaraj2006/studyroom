@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { User } from "../models/user.model";
-import { ApiError } from "../utils/ApiError"
+import { ApiError } from "../utils/ApiError";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
+import { RefreshTokenPayloadType } from "../types/jwtPayloadCustom";
 
 const createUser = async (name: string, username: string, email: string, password: string, cpassword: string) => {
     // check for empty fields
@@ -105,4 +107,43 @@ const logoutUser = (req: Request, res: Response) => {
     }
 }
 
-export const userService = { createUser, loginUser, logoutUser };
+const rotateAccessAndRefreshTokens = async (cookies: Record<any, any>) => {
+    // check if the cookie named "refreshtoken" is present or not
+    if (cookies['refreshtoken']) {
+        // try decoding
+        try {
+            // decode the token
+            const decodedRefresh = jwt.verify(cookies['refreshtoken'], process.env.REFRESH_TOKEN_SECRET!) as RefreshTokenPayloadType;
+
+            // find the user based on id in the token
+            const user = await User.findById(decodedRefresh?.id);
+
+            if (user) {
+                // generate the access & refresh tokens
+                const accessToken = user.generateAccessToken();
+                const refreshToken = user.generateRefreshToken();
+
+                // return the access & refresh tokens
+                return { accessToken, refreshToken };
+            } else {
+                // throw 404 not found
+                throw new ApiError(404, "User does not exist!")
+            }
+        } 
+        // throw errors if any
+        catch (error) {
+            if (error instanceof JsonWebTokenError) {
+                // throw 500 internal server error
+                throw new ApiError(500, error.message)
+            } else {
+                // throw 500 internal server error
+                throw new ApiError(500, (error as any).message)
+            }
+        }
+    } else {
+        // throw 401 unauthorized error
+        throw new ApiError(401, "Unauthorized access!")
+    }
+}
+
+export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens };
