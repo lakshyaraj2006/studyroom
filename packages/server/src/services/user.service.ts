@@ -5,6 +5,7 @@ import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { RefreshTokenPayloadType } from "../types/jwtPayloadCustom";
 import { generateVerificationCode } from "../lib/generateVerificationCode";
 import { sendForgotPasswordEmail } from "../lib/emails/sendForgotPasswordEmail";
+import { sendVerificationEmail } from "../lib/emails/sendVerificationEmail";
 
 const createUser = async (name: string, username: string, email: string, password: string, cpassword: string) => {
     // check for empty fields
@@ -39,18 +40,121 @@ const createUser = async (name: string, username: string, email: string, passwor
                 throw new ApiError(400, "Passwords do not match!");
             }
             else {
+                // generate the verification code
+                const verifyCode = generateVerificationCode();
+
+                // set expiry to 8 hours after generating the code
+                const verifyCodeExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000);
+
                 // create the new user
-                user = new User({ name, username, email, password });
+                user = new User({ name, username, email, password, verifyCode, verifyCodeExpiry });
 
                 // save the user
                 await user.save();
 
-                // generate the access & refresh tokens
-                const accessToken = user.generateAccessToken();
-                const refreshToken = user.generateRefreshToken();
+                // send the verification code to the user's email
+                const result = await sendVerificationEmail(username, email, verifyCode);
 
-                // return the access & refresh tokens
-                return { accessToken, refreshToken };
+                if (result) {
+                    // save the user
+                    await user.save();
+
+                    return true;
+                }
+                else {
+                    throw new ApiError(400, "Some error occurred!");
+                }
+            }
+        }
+    }
+}
+
+const resendVerificationCode = async (email: string) => {
+    // throw error if email is not provided
+    if (!email) {
+        throw new ApiError(400, "Email is required!");
+    } else {
+
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g;
+        // check for a valid email format
+        if (!emailRegex.test(email)) {
+            throw new ApiError(400, "Invalid email format!");
+        }
+
+        // find the user
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return true;
+        }
+
+        if (user.verified) {
+            return true;
+        }
+
+        // generate a new verification code
+        const verifyCode = generateVerificationCode();
+
+        // set expiry to 8 hours after generating the code
+        const verifyCodeExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000);
+
+        // update user verification data
+        user.verifyCode = verifyCode;
+        user.verifyCodeExpiry = verifyCodeExpiry;
+
+        // save the user
+        await user.save();
+
+        // send the verification code to the user's email
+        await sendVerificationEmail(user.username, email, verifyCode);
+
+        return true;
+    }
+};
+
+const verifyEmail = async (email: string, code: string) => {
+    // check for empty fields
+    if (!email || !code) {
+        throw new ApiError(400, "All fields are required!");
+    } else {
+        // validate email
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g;
+
+        // check if entered email is valid or not
+        if (!emailRegex.test(email)) {
+            throw new ApiError(400, "Invalid email address!");
+        }
+        else {
+            // check if the user exists with the username or email
+            let user = await User.findOne({ email });
+
+            // throw error if the user exists
+            if (!user) {
+                throw new ApiError(404, "User not found!");
+            }
+            else {
+                if (user.verified) {
+                    throw new ApiError(400, "User email already verified!")
+                } else if (code != user.verifyCode) {
+                    throw new ApiError(400, "Invalid verification code!");
+                } else if (new Date() > (user.verifyCodeExpiry as Date)) {
+                    throw new ApiError(400, "Code has expired!");
+                } else {
+                    // verify the user
+                    user.verified = true;
+                    user.verifyCode = undefined;
+                    user.verifyCodeExpiry = undefined;
+
+                    // save the user
+                    await user.save();
+
+                    // generate the access & refresh tokens
+                    const accessToken = user.generateAccessToken();
+                    const refreshToken = user.generateRefreshToken();
+
+                    // return the access & refresh tokens
+                    return { accessToken, refreshToken };
+                }
             }
         }
     }
@@ -180,7 +284,7 @@ const forgotPassword = async (email: string) => {
                 if (result) {
                     // save the user
                     await user.save();
-    
+
                     // return code & email for testing purposes only
                     return true;
                 }
@@ -242,4 +346,4 @@ const forgotPasswordReset = async (email: string, code: string, password: string
     }
 }
 
-export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset };
+export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode };

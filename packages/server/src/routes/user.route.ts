@@ -5,6 +5,8 @@ import { checkAuth } from "../middlewares";
 const router = Router();
 
 router.route("/create").post(userController.createUser);
+router.route("/resend-code").post(userController.resendVerificationCode);
+router.route("/verify-email").post(userController.verifyEmail);
 router.route("/login").post(userController.loginUser);
 router.route("/logout").post(checkAuth, userController.logoutUser);
 router.route("/rotate").post(userController.rotateAccessAndRefreshTokens);
