@@ -3,6 +3,8 @@ import { User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { RefreshTokenPayloadType } from "../types/jwtPayloadCustom";
+import { generateVerificationCode } from "../lib/generateVerificationCode";
+import { sendForgotPasswordEmail } from "../lib/emails/sendForgotPasswordEmail";
 
 const createUser = async (name: string, username: string, email: string, password: string, cpassword: string) => {
     // check for empty fields
@@ -129,7 +131,7 @@ const rotateAccessAndRefreshTokens = async (cookies: Record<any, any>) => {
                 // throw 404 not found
                 throw new ApiError(404, "User does not exist!")
             }
-        } 
+        }
         // throw errors if any
         catch (error) {
             if (error instanceof JsonWebTokenError) {
@@ -146,4 +148,98 @@ const rotateAccessAndRefreshTokens = async (cookies: Record<any, any>) => {
     }
 }
 
-export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens };
+const forgotPassword = async (email: string) => {
+    if (!email) {
+        // throw error if email is not provided
+        throw new ApiError(400, "Email is required!");
+    } else {
+        // check for a valid email format
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g;
+
+        if (!emailRegex.test(email)) {
+            // throw error if email failes regex test
+            throw new ApiError(400, "Invalid email format!");
+        } else {
+            // find the user
+            let user = await User.findOne({ email });
+
+            if (!user) {
+                // throw error if user is not found
+                throw new ApiError(404, "User not found!");
+            } else {
+                // generate the verification code
+                const code = generateVerificationCode();
+                user.verifyCode = code;
+
+                // set expiry to 8 hours after generating the code
+                user.verifyCodeExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000);
+
+                // send the verification code to the user's email
+                const result = await sendForgotPasswordEmail(user.username, email, code);
+
+                if (result) {
+                    // save the user
+                    await user.save();
+    
+                    // return code & email for testing purposes only
+                    return true;
+                }
+                else {
+                    throw new ApiError(400, "Some error occurred!");
+                }
+            }
+        }
+    }
+}
+
+const forgotPasswordReset = async (email: string, code: string, password: string, cpassword: string) => {
+    if (!email) {
+        // throw error if email is not provided
+        throw new ApiError(400, "Email is required!");
+    } else {
+        // check for a valid email format
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/g;
+
+        if (!emailRegex.test(email)) {
+            // throw error if email failes regex test
+            throw new ApiError(400, "Invalid email format!");
+        } else {
+            // find the user
+            let user = await User.findOne({ email });
+
+            if (!user) {
+                // throw error if user is not found
+                throw new ApiError(404, "User not found!");
+            } else {
+                // check if code is correct & has not expired
+                const isCodeCorrect = user.verifyCode === code;
+                const codeHasExpired = new Date() > (user.verifyCodeExpiry as Date);
+
+                // throw error if code is not correct
+                if (!isCodeCorrect) {
+                    throw new ApiError(400, "Invalid code");
+                } else {
+                    // throw error if code is correct & has expired
+                    if (codeHasExpired) {
+                        throw new ApiError(400, "Code has expired");
+                    } else {
+                        // return true if password matches
+                        if (password === cpassword) {
+                            user.password = password;
+                            user.verifyCode = undefined;
+                            user.verifyCodeExpiry = undefined;
+                            await user.save();
+
+                            return true;
+                        } else {
+                            // throw error is passwords do not match
+                            throw new ApiError(400, "Passwords do not match!");
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset };

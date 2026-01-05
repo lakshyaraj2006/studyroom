@@ -111,4 +111,48 @@ const rotateAccessAndRefreshTokens = async (req: Request, res: Response) => {
     }
 }
 
-export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens };
+const forgotPassword = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        const result = await userService.forgotPassword(email);
+
+        // return the api response
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Verification code sent to email"));
+    } catch (error) {
+        if (error instanceof ApiError) {
+            return res
+                .status(error.statusCode)
+                .json(new ApiResponse(error.statusCode, null, error.message));
+        } else {
+            return res
+                .status(500)
+                .json(new ApiResponse(500, (error as any).message));
+        }
+    }
+}
+
+const forgotPasswordReset = async (req: Request, res: Response) => {
+    try {
+        const { email, code, password, cpassword } = req.body;
+        const result = await userService.forgotPasswordReset(email, code, password, cpassword);
+
+        // return the api response
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Password reset successfully"));
+    } catch (error) {
+        if (error instanceof ApiError) {
+            return res
+                .status(error.statusCode)
+                .json(new ApiResponse(error.statusCode, null, error.message));
+        } else {
+            return res
+                .status(500)
+                .json(new ApiResponse(500, (error as any).message));
+        }
+    }
+}
+
+export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset };
