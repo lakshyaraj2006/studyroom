@@ -10,7 +10,7 @@ export interface AuthContextType {
 
     signup: (credentials: SignUpUserCredentials) => Promise<ServerResponse<null>>;
     signin: (credentials: SignInUserCredentials) => ServerResponse<{ accessToken: string }>;
-    verifyEmail: (email: string, code: string) => ServerResponse<{ accessToken: string }>;
+    verifyEmail: (email: string, code: string) => Promise<ServerResponse<{ accessToken: string }>>;
     resendCode: (email: string) => ServerResponse<null>;
     forgotPassword: (email: string) => ServerResponse<null>;
     forgotPasswordReset: (email: string, code: string, password: string, cpassword: string) => ServerResponse<null>;
@@ -34,7 +34,16 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
 
     const signin = (_credentials: SignInUserCredentials): ServerResponse<{ accessToken: string }> => ({} as ServerResponse<{ accessToken: string }>);
 
-    const verifyEmail = (_email: string, _code: string): ServerResponse<{ accessToken: string }> => ({} as ServerResponse<{ accessToken: string }>);
+    const verifyEmail = async (_email: string, _code: string): Promise<ServerResponse<{ accessToken: string }>> => {
+        const response = await axiosInstance.post<ServerResponse<{accessToken: string}>>('/users/verify-email', { email: _email, code: _code }, {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            withCredentials: true
+        });
+
+        return response.data;
+    };
 
     const resendCode = (_email: string): ServerResponse<null> => ({} as ServerResponse<null>);
 

@@ -9,9 +9,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
+import { useNavigate } from "react-router-dom";
 
 export default function SignUp() {
-    const { signup } = useAuth();
+    const { signup, verifyEmail, setAuthToken } = useAuth();
     const [mode, setMode] = useState<"signup" | "code">("signup");
     const [credentials, setCredentials] = useState<SignUpUserCredentials>({
         name: "",
@@ -23,6 +24,7 @@ export default function SignUp() {
     });
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCredentials(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -39,8 +41,8 @@ export default function SignUp() {
         e.preventDefault();
 
         try {
-            const {success, message} = await signup(credentials);
-            
+            const { success, message } = await signup(credentials);
+
             if (success) {
                 toast.success(message);
                 setMode("code");
@@ -50,7 +52,7 @@ export default function SignUp() {
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                const {message} = error.response?.data;
+                const { message } = error.response?.data;
                 toast.error(message);
             } else {
                 toast.error((error as any).message);
@@ -60,10 +62,34 @@ export default function SignUp() {
         }
     };
 
-    const handleCodeSubmit = (e: React.FormEvent) => {
+    const handleCodeSubmit = async (e: React.FormEvent) => {
+        setLoading(true);
         e.preventDefault();
-        console.log("OTP submitted:", credentials.code);
-        // verify OTP here
+
+        try {
+            const { success, message, data: { accessToken } } = await verifyEmail(credentials.email, credentials.code);
+
+            if (success) {
+                toast.success(message);
+
+                setTimeout(() => {
+                    setAuthToken(accessToken);
+                    navigate("/");
+                }, 2000);
+            }
+            else {
+                toast.error(message);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                const { message } = error.response?.data;
+                toast.error(message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -114,11 +140,11 @@ export default function SignUp() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full flex items-center gap-2">
+                            <Button type="submit" className="w-full flex items-center gap-2" disabled={loading}>
                                 {
-                                    loading 
-                                    ? <><Spinner /> Loading...</>
-                                    : <><LogInIcon /> Sign Up</>
+                                    loading
+                                        ? <><Spinner /> Loading...</>
+                                        : <><LogInIcon /> Sign Up</>
                                 }
                             </Button>
                         </form>
@@ -127,7 +153,7 @@ export default function SignUp() {
                     {mode === "code" && (
                         <form onSubmit={handleCodeSubmit} className="w-full space-y-4">
                             <div>
-                                <label htmlFor="code">OTP Code</label>
+                                <label htmlFor="code">Verifcation Code</label>
                                 <Input
                                     type="text"
                                     name="code"
@@ -138,8 +164,12 @@ export default function SignUp() {
                                     maxLength={6}
                                 />
                             </div>
-                            <Button type="submit" className="w-full">
-                                Verify OTP
+                            <Button type="submit" className="w-full flex items-center gap-2" disabled={loading}>
+                                {
+                                    loading
+                                        ? <><Spinner /> Loading...</>
+                                        : <><LogInIcon /> Verify Code</>
+                                }
                             </Button>
                         </form>
                     )}
