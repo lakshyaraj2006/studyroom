@@ -2,11 +2,16 @@ import { useState } from "react";
 import type { SignUpUserCredentials } from "@/interfaces/signup-user-credentials";
 import { Input } from "../../components/ui/input";
 import PasswordStrength from "../../components/password-strength.component";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LogInIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function SignUp() {
+    const { signup } = useAuth();
     const [mode, setMode] = useState<"signup" | "code">("signup");
     const [credentials, setCredentials] = useState<SignUpUserCredentials>({
         name: "",
@@ -17,6 +22,7 @@ export default function SignUp() {
         code: ""
     });
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCredentials(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -28,10 +34,30 @@ export default function SignUp() {
         setCredentials(prev => ({ ...prev, code: val.slice(0, 6) }));
     };
 
-    const handleSignupSubmit = (e: React.FormEvent) => {
+    const handleSignupSubmit = async (e: React.FormEvent) => {
+        setLoading(true);
         e.preventDefault();
-        console.log("Signup credentials:", credentials);
-        setMode("code"); // show OTP form after signup
+
+        try {
+            const {success, message} = await signup(credentials);
+            
+            if (success) {
+                toast.success(message);
+                setMode("code");
+            }
+            else {
+                toast.error(message);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                const {message} = error.response?.data;
+                toast.error(message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCodeSubmit = (e: React.FormEvent) => {
@@ -88,8 +114,12 @@ export default function SignUp() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full">
-                                Sign Up
+                            <Button type="submit" className="w-full flex items-center gap-2">
+                                {
+                                    loading 
+                                    ? <><Spinner /> Loading...</>
+                                    : <><LogInIcon /> Sign Up</>
+                                }
                             </Button>
                         </form>
                     )}
