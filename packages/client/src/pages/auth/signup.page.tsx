@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { SignUpUserCredentials } from "@/interfaces/signup-user-credentials";
 import { Input } from "../../components/ui/input";
 import PasswordStrength from "../../components/password-strength.component";
-import { Eye, EyeOff, LogInIcon } from "lucide-react";
+import { Eye, EyeOff, LockIcon, LogInIcon, RotateCwIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,9 +11,12 @@ import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
 import { useNavigate } from "react-router-dom";
 
+type LoadingAction = "signup" | "verify" | "resend" | null;
+
 export default function SignUp() {
-    const { signup, verifyEmail, setAuthToken } = useAuth();
+    const { signup, verifyEmail, setAuthToken, resendCode } = useAuth();
     const [mode, setMode] = useState<"signup" | "code">("signup");
+    const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
     const [credentials, setCredentials] = useState<SignUpUserCredentials>({
         name: "",
         username: "",
@@ -23,7 +26,6 @@ export default function SignUp() {
         code: ""
     });
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,64 +33,76 @@ export default function SignUp() {
     };
 
     const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // allow letters & digits, max length 6
         const val = e.target.value.replace(/\s/g, "");
         setCredentials(prev => ({ ...prev, code: val.slice(0, 6) }));
     };
 
     const handleSignupSubmit = async (e: React.FormEvent) => {
-        setLoading(true);
         e.preventDefault();
+        setLoadingAction("signup");
 
         try {
             const { success, message } = await signup(credentials);
-
             if (success) {
                 toast.success(message);
                 setMode("code");
-            }
-            else {
+            } else {
                 toast.error(message);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                const { message } = error.response?.data;
-                toast.error(message);
+                toast.error(error.response?.data?.message);
             } else {
                 toast.error((error as any).message);
             }
         } finally {
-            setLoading(false);
+            setLoadingAction(null);
         }
     };
 
     const handleCodeSubmit = async (e: React.FormEvent) => {
-        setLoading(true);
         e.preventDefault();
+        setLoadingAction("verify");
 
         try {
-            const { success, message, data: { accessToken } } = await verifyEmail(credentials.email, credentials.code);
+            const { success, message, data: { accessToken } } =
+                await verifyEmail(credentials.email, credentials.code);
 
             if (success) {
                 toast.success(message);
-
                 setTimeout(() => {
                     setAuthToken(accessToken);
                     navigate("/");
                 }, 2000);
-            }
-            else {
+            } else {
                 toast.error(message);
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                const { message } = error.response?.data;
-                toast.error(message);
+                toast.error(error.response?.data?.message);
             } else {
                 toast.error((error as any).message);
             }
         } finally {
-            setLoading(false);
+            setLoadingAction(null);
+        }
+    };
+
+    const handleResendCodeSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoadingAction("resend");
+
+        try {
+            const { success, message } = await resendCode(credentials.email);
+            success ? toast.success(message) : toast.error(message);
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast.error(error.response?.data?.message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoadingAction(null);
         }
     };
 
@@ -106,20 +120,24 @@ export default function SignUp() {
                         <form onSubmit={handleSignupSubmit} className="w-full space-y-4">
                             <div>
                                 <label htmlFor="name">Name</label>
-                                <Input type="text" name="name" id="name" placeholder="Name" onChange={handleChange} />
+                                <Input name="name" id="name" placeholder="Name" onChange={handleChange} />
                             </div>
+
                             <div>
                                 <label htmlFor="username">Username</label>
-                                <Input type="text" name="username" id="username" placeholder="Username" onChange={handleChange} />
+                                <Input name="username" id="username" placeholder="Username" onChange={handleChange} />
                             </div>
+
                             <div>
                                 <label htmlFor="email">Email Address</label>
-                                <Input type="email" name="email" id="email" placeholder="Email" onChange={handleChange} />
+                                <Input name="email" id="email" type="email" placeholder="Email" onChange={handleChange} />
                             </div>
+
                             <div>
                                 <label htmlFor="password">Password</label>
                                 <PasswordStrength credentials={credentials} setCredentials={setCredentials} />
                             </div>
+
                             <div>
                                 <label htmlFor="cpassword">Confirm Password</label>
                                 <div className="relative">
@@ -140,11 +158,14 @@ export default function SignUp() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full flex items-center gap-2" disabled={loading}>
-                                {
-                                    loading
-                                        ? <><Spinner /> Loading...</>
-                                        : <><LogInIcon /> Sign Up</>
+                            <Button
+                                type="submit"
+                                className="w-full flex items-center gap-2 cusror-pointer"
+                                disabled={loadingAction === "signup"}
+                            >
+                                {loadingAction === "signup"
+                                    ? <><Spinner /> Loading...</>
+                                    : <><LogInIcon /> Sign Up</>
                                 }
                             </Button>
                         </form>
@@ -153,9 +174,8 @@ export default function SignUp() {
                     {mode === "code" && (
                         <form onSubmit={handleCodeSubmit} className="w-full space-y-4">
                             <div>
-                                <label htmlFor="code">Verifcation Code</label>
+                                <label htmlFor="code">Verification Code</label>
                                 <Input
-                                    type="text"
                                     name="code"
                                     id="code"
                                     placeholder="Enter 6-character code"
@@ -164,13 +184,31 @@ export default function SignUp() {
                                     maxLength={6}
                                 />
                             </div>
-                            <Button type="submit" className="w-full flex items-center gap-2" disabled={loading}>
-                                {
-                                    loading
+
+                            <div className="flex w-full gap-2">
+                                <Button
+                                    type="button"
+                                    className="w-1/2 flex items-center gap-2 cusror-pointer"
+                                    onClick={handleResendCodeSubmit}
+                                    disabled={loadingAction === "resend"}
+                                >
+                                    {loadingAction === "resend"
                                         ? <><Spinner /> Loading...</>
-                                        : <><LogInIcon /> Verify Code</>
-                                }
-                            </Button>
+                                        : <><RotateCwIcon /> Resend Code</>
+                                    }
+                                </Button>
+
+                                <Button
+                                    type="submit"
+                                    className="flex-1 flex items-center gap-2 cusror-pointer"
+                                    disabled={loadingAction === "verify"}
+                                >
+                                    {loadingAction === "verify"
+                                        ? <><Spinner /> Loading...</>
+                                        : <><LockIcon /> Verify Code</>
+                                    }
+                                </Button>
+                            </div>
                         </form>
                     )}
                 </CardContent>
