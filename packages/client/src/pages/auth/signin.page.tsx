@@ -1,15 +1,23 @@
 import { useState } from "react";
 import type { SignInUserCredentials } from "@/interfaces/signin-user-credentials";
 import { Input } from "../../components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LogInIcon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import { useNavigate } from "react-router-dom";
 
 export default function SignIn() {
+    const { signin, setAuthToken } = useAuth();
+    const [loading, setLoading] = useState(false);
     const [credentials, setCredentials] = useState<SignInUserCredentials>({
         identifier: "",
         password: ""
     });
+    const navigate = useNavigate();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -17,10 +25,32 @@ export default function SignIn() {
         setCredentials(credentials => ({ ...credentials, [e.target.name]: e.target.value }));
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
 
-        console.log(credentials);
+        try {
+            const { success, message, data: { accessToken } } = await signin(credentials);
+            if (success) {
+                toast.success(message);
+
+                setTimeout(() => {
+                    setAuthToken(accessToken);
+                    navigate("/");
+                }, 2000);
+            } else {
+                toast.error(message);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                const { message } = error.response?.data;
+                toast.error(message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
 
@@ -56,8 +86,11 @@ export default function SignIn() {
                                 </button>
                             </div>
                         </div>
-                        <Button type="submit" className="w-full">
-                            Sign In
+                        <Button type="submit" className="w-full flex items-center gap-2 cursor-pointer" disabled={loading}>
+                            {
+                                loading ? <><Spinner /> Loading...</>
+                                : <><LogInIcon /> Sign In</>
+                            }
                         </Button>
                     </form>
                 </CardContent>
