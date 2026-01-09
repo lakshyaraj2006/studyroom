@@ -5,4 +5,6 @@ const config: AxiosRequestConfig = {
 }
 
 const axiosInstance = axios.create(config);
+export const axiosPrivateInstance = axios.create({ ...config, withCredentials: true });
+
 export default axiosInstance;
