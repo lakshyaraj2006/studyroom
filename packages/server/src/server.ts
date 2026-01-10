@@ -4,6 +4,7 @@ import { connectDB } from "./lib/db";
 import cookieParser from "cookie-parser";
 import { userRouter } from "./routes/user.route";
 import cors from "cors";
+import { profileRouter } from "./routes/profile.route";
 
 connectDB()
 .then(() => {
@@ -20,6 +21,7 @@ connectDB()
     }))
     
     app.use("/api/v1/users", userRouter);
+    app.use("/api/v1/profile", profileRouter);
 
     app.listen(port, () => {
         console.log(`StudyRoom server listening on port ${port}`);
