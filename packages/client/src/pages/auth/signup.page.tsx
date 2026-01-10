@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 type LoadingAction = "signup" | "verify" | "resend" | null;
 
@@ -26,7 +26,6 @@ export default function SignUp() {
         code: ""
     });
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const navigate = useNavigate();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setCredentials(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -44,16 +43,16 @@ export default function SignUp() {
         try {
             const { success, message } = await signup(credentials);
             if (success) {
-                toast.success(message);
+                toast.success(message, { duration: 2000 });
                 setMode("code");
             } else {
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message);
+                toast.error(error.response?.data?.message, { duration: 2000 });
             } else {
-                toast.error((error as any).message);
+                toast.error((error as any).message, { duration: 2000 });
             }
         } finally {
             setLoadingAction(null);
@@ -69,19 +68,27 @@ export default function SignUp() {
                 await verifyEmail(credentials.email, credentials.code);
 
             if (success) {
-                toast.success(message);
+                toast.success(message, { duration: 2000 });
+                setCredentials({
+                    name: "",
+                    username: "",
+                    email: "",
+                    password: "",
+                    cpassword: "",
+                    code: ""
+                });
+
                 setTimeout(() => {
                     setAuthToken(accessToken);
-                    navigate("/");
                 }, 2000);
             } else {
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message);
+                toast.error(error.response?.data?.message, { duration: 2000 });
             } else {
-                toast.error((error as any).message);
+                toast.error((error as any).message, { duration: 2000 });
             }
         } finally {
             setLoadingAction(null);
@@ -94,12 +101,12 @@ export default function SignUp() {
 
         try {
             const { success, message } = await resendCode(credentials.email);
-            success ? toast.success(message) : toast.error(message);
+            success ? toast.success(message, { duration: 2000 }) : toast.error(message, { duration: 2000 });
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message);
+                toast.error(error.response?.data?.message, { duration: 2000 });
             } else {
-                toast.error((error as any).message);
+                toast.error((error as any).message, { duration: 2000 });
             }
         } finally {
             setLoadingAction(null);

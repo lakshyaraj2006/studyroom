@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
-import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 export default function SignIn() {
@@ -18,7 +17,6 @@ export default function SignIn() {
         identifier: "",
         password: ""
     });
-    const navigate = useNavigate();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -33,27 +31,29 @@ export default function SignIn() {
         try {
             const { success, message, data: { accessToken } } = await signin(credentials);
             if (success) {
-                toast.success(message);
+                toast.success(message, { duration: 2000 });
+                setCredentials({
+                    identifier: "",
+                    password: ""
+                });
 
                 setTimeout(() => {
                     setAuthToken(accessToken);
-                    navigate("/");
                 }, 2000);
             } else {
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             }
         } catch (error) {
             if (error instanceof AxiosError) {
                 const { message } = error.response?.data;
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             } else {
-                toast.error((error as any).message);
+                toast.error((error as any).message, { duration: 2000 });
             }
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
@@ -97,7 +97,7 @@ export default function SignIn() {
 
                     <div className="flex gap-8 w-full items-center justify-center mt-6">
                         <Link to="/auth/forgot-password" className="text-sm text-center flex gap-2 items-center hover:underline">
-                           <HelpCircleIcon size={16} /> Forgot Password
+                            <HelpCircleIcon size={16} /> Forgot Password
                         </Link>
                         <Link to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
                             <UserPlus2Icon size={16} /> Sign Up

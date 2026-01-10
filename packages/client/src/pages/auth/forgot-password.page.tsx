@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Input } from "../../components/ui/input";
-import { ArrowLeftIcon, Eye, EyeOff, LockIcon, LogInIcon, MailIcon, UserPlus2Icon } from "lucide-react";
+import { ArrowLeftIcon, Eye, EyeOff, LockIcon, LogInIcon, MailIcon, RotateCwIcon, UserPlus2Icon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,7 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 export default function ForgotPassword() {
     const { forgotPassword, forgotPasswordReset } = useAuth();
     const [mode, setMode] = useState<"enter-email" | "reset-password">("enter-email");
-    const [loadingAction, setLoadingAction] = useState<"enter-email" | "reset-password" | null>(null);
+    const [loadingAction, setLoadingAction] = useState<"enter-email" | "reset-password" | "resend" | null>(null);
 
     const [resetData, setResetData] = useState({
         email: "",
@@ -25,22 +25,25 @@ export default function ForgotPassword() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
 
-    const handleEmailSubmit = async (e: React.FormEvent) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setResetData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const sendCode = async (action: "enter-email" | "resend") => {
         if (loadingAction) return;
-        e.preventDefault();
-        setLoadingAction("enter-email");
+        setLoadingAction(action);
 
         try {
             const { success, message } = await forgotPassword(resetData.email);
             if (success) {
-                toast.success(message);
+                toast.success(message, { duration: 2000 });
                 setMode("reset-password");
             } else {
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message);
+                toast.error(error.response?.data?.message ?? "Something went wrong", { duration: 2000 });
             } else {
                 toast.error((error as any).message);
             }
@@ -49,34 +52,39 @@ export default function ForgotPassword() {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setResetData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
+    const handleEmailSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        sendCode("enter-email");
+    };
+
+    const handleResendCode = () => {
+        sendCode("resend");
     };
 
     const handleResetSubmit = async (e: React.FormEvent) => {
-        if (loadingAction) return;
         e.preventDefault();
+        if (loadingAction) return;
         setLoadingAction("reset-password");
 
         try {
-            const { success, message } = await forgotPasswordReset(resetData.email, resetData.code, resetData.password, resetData.confirmPassword);
-            if (success) {
-                toast.success(message);
+            const { success, message } = await forgotPasswordReset(
+                resetData.email,
+                resetData.code,
+                resetData.password,
+                resetData.confirmPassword
+            );
 
-                setTimeout(() => {
-                    navigate("/auth/signin");
-                }, 2000);
+            if (success) {
+                toast.success(message, { duration: 2000 });
+                setTimeout(() => navigate("/auth/signin"), 300);
             } else {
-                toast.error(message);
+                toast.error(message, { duration: 2000 });
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message);
+                toast.error(error.response?.data?.message ?? "Something went wrong", { duration: 2000 });
             } else {
-                toast.error((error as any).message);
+                toast.error((error as any).message, { duration: 2000 });
             }
         } finally {
             setLoadingAction(null);
@@ -87,42 +95,41 @@ export default function ForgotPassword() {
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
             <Card className="w-full max-w-sm sm:max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-center">
-                        Forgot Password
-                    </CardTitle>
+                    <CardTitle className="text-lg font-semibold text-center">Forgot Password</CardTitle>
                 </CardHeader>
 
                 <CardContent>
                     {mode === "enter-email" && (
-                        <>
-                            <form onSubmit={handleEmailSubmit} className="space-y-4">
-                                <div>
-                                    <label htmlFor="email">Email</label>
-                                    <Input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        placeholder="Enter your email"
-                                        value={resetData.email}
-                                        onChange={handleChange}
-                                    />
-                                </div>
+                        <form onSubmit={handleEmailSubmit} className="space-y-4">
+                            <div>
+                                <label htmlFor="email">Email</label>
+                                <Input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="Enter your email"
+                                    value={resetData.email}
+                                    onChange={handleChange}
+                                />
+                            </div>
 
-                                <Button
-                                    type="submit"
-                                    className="w-full cursor-pointer"
-                                    disabled={loadingAction === "enter-email"}
-                                >
-                                    {loadingAction && loadingAction === "enter-email"
-                                        ? <><Spinner /> Loading...</>
-                                        : <><MailIcon /> Send Code</>
-                                    }
-                                </Button>
-                            </form>
-                            {(resetData.email !== "" || loadingAction === "enter-email") && <p className="text-sm text-center underline mt-1 cursor-pointer" onClick={() => setMode("reset-password")}>
-                                Already have a code ?
-                            </p>}
-                        </>
+                            <Button
+                                type="submit"
+                                className="w-full cursor-pointer"
+                                disabled={loadingAction === "enter-email"}
+                            >
+                                {loadingAction === "enter-email"
+                                    ? <><Spinner /> Loading...</>
+                                    : <><MailIcon /> Send Code</>
+                                }
+                            </Button>
+
+                            {(resetData.email || loadingAction === "enter-email") && (
+                                <p className="text-sm text-center underline mt-1 cursor-pointer" onClick={() => setMode("reset-password")}>
+                                    Already have a code?
+                                </p>
+                            )}
+                        </form>
                     )}
 
                     {mode === "reset-password" && (
@@ -141,15 +148,11 @@ export default function ForgotPassword() {
 
                             <div>
                                 <label htmlFor="password">New Password</label>
-                                <div className="relative">
-                                    <PasswordStrength
-                                        value={resetData.password}
-                                        onChange={(value) => {
-                                            setResetData(prev => ({ ...prev, password: value }))
-                                        }}
-                                        showStrength
-                                    />
-                                </div>
+                                <PasswordStrength
+                                    value={resetData.password}
+                                    onChange={(value) => setResetData(prev => ({ ...prev, password: value }))}
+                                    showStrength
+                                />
                             </div>
 
                             <div>
@@ -176,26 +179,38 @@ export default function ForgotPassword() {
                             <div className="flex w-full items-center gap-2">
                                 <Button
                                     type="button"
-                                    className="w-1/2 cursor-pointer"
-                                    onClick={() => setMode("enter-email")}
-                                    disabled={loadingAction === "reset-password"}
+                                    className="w-1/2 flex items-center gap-2 cursor-pointer"
+                                    onClick={handleResendCode}
+                                    disabled={loadingAction === "resend"}
                                 >
-                                    <ArrowLeftIcon /> Back
+                                    {loadingAction === "resend"
+                                        ? <><Spinner /> Loading...</>
+                                        : <><RotateCwIcon /> Resend Code</>
+                                    }
                                 </Button>
                                 <Button
                                     type="submit"
                                     className="flex-1 cursor-pointer"
                                     disabled={loadingAction === "reset-password"}
                                 >
-                                    {loadingAction && loadingAction === "reset-password"
+                                    {loadingAction === "reset-password"
                                         ? <><Spinner /> Loading...</>
                                         : <><LockIcon /> Reset Password</>
                                     }
                                 </Button>
                             </div>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full cursor-pointer mt-2"
+                                onClick={() => setMode("enter-email")}
+                                disabled={loadingAction === "reset-password"}
+                            >
+                                <ArrowLeftIcon /> Back
+                            </Button>
                         </form>
                     )}
-
 
                     <div className="flex gap-8 w-full items-center justify-center mt-6">
                         <Link to="/auth/signin" className="text-sm text-center flex gap-2 items-center hover:underline">
