@@ -1,11 +1,11 @@
-import { User } from "../models/user.model";
+import { IUser, User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 
 const getUserProfile = async (userHandle: string) => {
     if (!userHandle || userHandle === "") {
         throw new ApiError(400, "User handle required")
     } else {
-        const user = await User.findOne({handle: userHandle});
+        const user = await User.findOne({ handle: userHandle });
 
         if (!user) {
             throw new ApiError(404, "User not found!");
@@ -15,4 +15,28 @@ const getUserProfile = async (userHandle: string) => {
     }
 }
 
-export const profileService = { getUserProfile };
+const updateUserProfile = async (userId: string, userDetails: Pick<IUser, "name" | "handle" | "bio">) => {
+    let user = await User.findOne({ handle: userDetails.handle });
+
+    if (user) {
+        throw new ApiError(400, "Handle is already in use")
+    } else {
+        user = await User.findByIdAndUpdate(userId,
+            {
+                $set: userDetails
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        return true;
+    }
+}
+
+export const profileService = { getUserProfile, updateUserProfile };
