@@ -1,34 +1,86 @@
 import { useState } from "react";
 import { Input } from "../../components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowLeftIcon, Eye, EyeOff, LockIcon, LogInIcon, MailIcon, UserPlus2Icon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
+import { Spinner } from "@/components/ui/spinner";
+import PasswordStrength from "@/components/password-strength.component";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function ForgotPassword() {
+    const { forgotPassword, forgotPasswordReset } = useAuth();
     const [mode, setMode] = useState<"enter-email" | "reset-password">("enter-email");
-    const [email, setEmail] = useState("");
+    const [loadingAction, setLoadingAction] = useState<"enter-email" | "reset-password" | null>(null);
+
     const [resetData, setResetData] = useState({
+        email: "",
         code: "",
         password: "",
         confirmPassword: ""
     });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const handleEmailSubmit = (e: React.FormEvent) => {
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const navigate = useNavigate();
+
+    const handleEmailSubmit = async (e: React.FormEvent) => {
+        if (loadingAction) return;
         e.preventDefault();
-        if (email.trim()) {
-            setMode("reset-password");
+        setLoadingAction("enter-email");
+
+        try {
+            const { success, message } = await forgotPassword(resetData.email);
+            if (success) {
+                toast.success(message);
+                setMode("reset-password");
+            } else {
+                toast.error(message);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast.error(error.response?.data?.message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoadingAction(null);
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setResetData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setResetData(prev => ({
+            ...prev,
+            [e.target.name]: e.target.value
+        }));
     };
 
-    const handleResetSubmit = (e: React.FormEvent) => {
+    const handleResetSubmit = async (e: React.FormEvent) => {
+        if (loadingAction) return;
         e.preventDefault();
-        console.log({ email, ...resetData });
+        setLoadingAction("reset-password");
+
+        try {
+            const { success, message } = await forgotPasswordReset(resetData.email, resetData.code, resetData.password, resetData.confirmPassword);
+            if (success) {
+                toast.success(message);
+
+                setTimeout(() => {
+                    navigate("/auth/signin");
+                }, 2000);
+            } else {
+                toast.error(message);
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                toast.error(error.response?.data?.message);
+            } else {
+                toast.error((error as any).message);
+            }
+        } finally {
+            setLoadingAction(null);
+        }
     };
 
     return (
@@ -42,21 +94,35 @@ export default function ForgotPassword() {
 
                 <CardContent>
                     {mode === "enter-email" && (
-                        <form onSubmit={handleEmailSubmit} className="space-y-4">
-                            <div>
-                                <label htmlFor="email">Email</label>
-                                <Input
-                                    type="email"
-                                    id="email"
-                                    placeholder="Enter your email"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                />
-                            </div>
-                            <Button type="submit" className="w-full">
-                                Submit Email
-                            </Button>
-                        </form>
+                        <>
+                            <form onSubmit={handleEmailSubmit} className="space-y-4">
+                                <div>
+                                    <label htmlFor="email">Email</label>
+                                    <Input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        placeholder="Enter your email"
+                                        value={resetData.email}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full cursor-pointer"
+                                    disabled={loadingAction === "enter-email"}
+                                >
+                                    {loadingAction && loadingAction === "enter-email"
+                                        ? <><Spinner /> Loading...</>
+                                        : <><MailIcon /> Send Code</>
+                                    }
+                                </Button>
+                            </form>
+                            {(resetData.email !== "" || loadingAction === "enter-email") && <p className="text-sm text-center underline mt-1 cursor-pointer" onClick={() => setMode("reset-password")}>
+                                Already have a code ?
+                            </p>}
+                        </>
                     )}
 
                     {mode === "reset-password" && (
@@ -76,21 +142,13 @@ export default function ForgotPassword() {
                             <div>
                                 <label htmlFor="password">New Password</label>
                                 <div className="relative">
-                                    <Input
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        id="password"
-                                        placeholder="Enter new password"
+                                    <PasswordStrength
                                         value={resetData.password}
-                                        onChange={handleChange}
+                                        onChange={(value) => {
+                                            setResetData(prev => ({ ...prev, password: value }))
+                                        }}
+                                        showStrength
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                                    >
-                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
                                 </div>
                             </div>
 
@@ -115,11 +173,38 @@ export default function ForgotPassword() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full">
-                                Reset Password
-                            </Button>
+                            <div className="flex w-full items-center gap-2">
+                                <Button
+                                    type="button"
+                                    className="w-1/2 cursor-pointer"
+                                    onClick={() => setMode("enter-email")}
+                                    disabled={loadingAction === "reset-password"}
+                                >
+                                    <ArrowLeftIcon /> Back
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="flex-1 cursor-pointer"
+                                    disabled={loadingAction === "reset-password"}
+                                >
+                                    {loadingAction && loadingAction === "reset-password"
+                                        ? <><Spinner /> Loading...</>
+                                        : <><LockIcon /> Reset Password</>
+                                    }
+                                </Button>
+                            </div>
                         </form>
                     )}
+
+
+                    <div className="flex gap-8 w-full items-center justify-center mt-6">
+                        <Link to="/auth/signin" className="text-sm text-center flex gap-2 items-center hover:underline">
+                            <LogInIcon size={16} /> Sign In
+                        </Link>
+                        <Link to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
+                            <UserPlus2Icon size={16} /> Sign Up
+                        </Link>
+                    </div>
                 </CardContent>
             </Card>
         </div>

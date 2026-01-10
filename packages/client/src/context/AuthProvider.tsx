@@ -12,8 +12,8 @@ export interface AuthContextType {
     signin: (credentials: SignInUserCredentials) => Promise<ServerResponse<{ accessToken: string }>>;
     verifyEmail: (email: string, code: string) => Promise<ServerResponse<{ accessToken: string }>>;
     resendCode: (email: string) => Promise<ServerResponse<null>>;
-    forgotPassword: (email: string) => ServerResponse<null>;
-    forgotPasswordReset: (email: string, code: string, password: string, cpassword: string) => ServerResponse<null>;
+    forgotPassword: (email: string) => Promise<ServerResponse<null>>;
+    forgotPasswordReset: (email: string, code: string, password: string, cpassword: string) => Promise<ServerResponse<null>>;
 }
 
 
@@ -64,9 +64,25 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         return response.data;
     };
 
-    const forgotPassword = (_email: string): ServerResponse<null> => ({} as ServerResponse<null>);
+    const forgotPassword = async (_email: string): Promise<ServerResponse<null>> => {
+        const response = await axiosInstance.post<ServerResponse<null>>('/users/forgot-password', {email: _email}, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
 
-    const forgotPasswordReset = (_email: string, _code: string, _password: string, _cpassword: string): ServerResponse<null> => ({} as ServerResponse<null>);
+        return response.data;
+    };
+
+    const forgotPasswordReset = async (_email: string, _code: string, _password: string, _cpassword: string): Promise<ServerResponse<null>> => {
+        const response = await axiosInstance.post<ServerResponse<null>>('/users/forgot-password-reset', {email: _email, code: _code, password: _password, cpassword: _cpassword}, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        return response.data;
+    };
 
     const contextData: AuthContextType = {
         authToken,

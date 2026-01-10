@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { SignInUserCredentials } from "@/interfaces/signin-user-credentials";
 import { Input } from "../../components/ui/input";
-import { Eye, EyeOff, LogInIcon } from "lucide-react";
+import { Eye, EyeOff, HelpCircleIcon, LogInIcon, UserPlus2Icon } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import { AxiosError } from "axios";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function SignIn() {
     const { signin, setAuthToken } = useAuth();
@@ -89,10 +90,19 @@ export default function SignIn() {
                         <Button type="submit" className="w-full flex items-center gap-2 cursor-pointer" disabled={loading}>
                             {
                                 loading ? <><Spinner /> Loading...</>
-                                : <><LogInIcon /> Sign In</>
+                                    : <><LogInIcon /> Sign In</>
                             }
                         </Button>
                     </form>
+
+                    <div className="flex gap-8 w-full items-center justify-center mt-6">
+                        <Link to="/auth/forgot-password" className="text-sm text-center flex gap-2 items-center hover:underline">
+                           <HelpCircleIcon size={16} /> Forgot Password
+                        </Link>
+                        <Link to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
+                            <UserPlus2Icon size={16} /> Sign Up
+                        </Link>
+                    </div>
                 </CardContent>
             </Card>
         </div>

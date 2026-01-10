@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 type LoadingAction = "signup" | "verify" | "resend" | null;
 
@@ -135,7 +135,13 @@ export default function SignUp() {
 
                             <div>
                                 <label htmlFor="password">Password</label>
-                                <PasswordStrength credentials={credentials} setCredentials={setCredentials} />
+                                <PasswordStrength
+                                    value={credentials.password}
+                                    onChange={(value) => {
+                                        setCredentials(prev => ({ ...prev, password: value }))
+                                    }}
+                                    showStrength
+                                />
                             </div>
 
                             <div>
@@ -211,6 +217,10 @@ export default function SignUp() {
                             </div>
                         </form>
                     )}
+
+                    <Link to="/auth/signin" className="text-sm flex gap-2 items-center justify-center hover:underline mt-6">
+                        <LogInIcon size={16} /> Sign In
+                    </Link>
                 </CardContent>
             </Card>
         </div>

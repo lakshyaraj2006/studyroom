@@ -1,8 +1,7 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Eye, EyeOff } from "lucide-react"
-import type { SignUpUserCredentials } from "@/interfaces/signup-user-credentials"
 
 type Strength = "weak" | "medium" | "strong"
 
@@ -38,13 +37,12 @@ function generateStrongPassword(): string {
   const startLetters =
     randomFrom(lettersUpper, 1) + randomFrom(lettersLower, 5)
 
-  const includeMidSpecial = Math.random() > 0.5
-  const midSpecial = includeMidSpecial
-    ? midSpecials[Math.floor(Math.random() * midSpecials.length)]
-    : ""
+  const midSpecial =
+    Math.random() > 0.5
+      ? midSpecials[Math.floor(Math.random() * midSpecials.length)]
+      : ""
 
   const numbers = randomFrom(digits, Math.floor(Math.random() * 4) + 2)
-
   const endSpecial =
     endSpecials[Math.floor(Math.random() * endSpecials.length)]
 
@@ -52,17 +50,23 @@ function generateStrongPassword(): string {
 }
 
 interface PasswordStrengthProps {
-  credentials: SignUpUserCredentials
-  setCredentials: React.Dispatch<React.SetStateAction<SignUpUserCredentials>>
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  showStrength?: boolean
 }
 
 export default function PasswordStrength({
-  credentials: { password },
-  setCredentials,
+  value,
+  onChange,
+  placeholder = "Enter password",
+  showStrength = false,
 }: PasswordStrengthProps) {
   const [showPassword, setShowPassword] = useState(false)
 
-  const strength = password ? getPasswordStrength(password) : null
+  const strength = showStrength && value
+    ? getPasswordStrength(value)
+    : null
 
   const strengthColor =
     strength === "weak"
@@ -78,29 +82,19 @@ export default function PasswordStrength({
       ? "w-2/3"
       : "w-full"
 
-  const handleGenerate = () => {
-    const generated = generateStrongPassword()
-    setCredentials((prev) => ({ ...prev, password: generated }))
-  }
-
   return (
     <div className="space-y-2">
       <div className="relative">
         <Input
           type={showPassword ? "text" : "password"}
-          placeholder="Enter password"
-          value={password}
-          onChange={(e) =>
-            setCredentials((prev) => ({
-              ...prev,
-              password: e.target.value,
-            }))
-          }
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
         />
 
         <button
           type="button"
-          onClick={() => setShowPassword((v) => !v)}
+          onClick={() => setShowPassword(v => !v)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         >
           {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -132,7 +126,7 @@ export default function PasswordStrength({
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleGenerate}
+              onClick={() => onChange(generateStrongPassword())}
             >
               Generate
             </Button>
