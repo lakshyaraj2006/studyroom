@@ -15,6 +15,6 @@ export const errorHandler = (
   }
 
   return res.status(500).json(
-    new ApiResponse(500, null, "Something went wrong")
+    new ApiResponse(500, null, err.message || "Something went wrong")
   );
 };

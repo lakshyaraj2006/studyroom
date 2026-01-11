@@ -1,3 +1,4 @@
+import { uploadOnCloudinary } from "../lib/cloudinary.config";
 import { IUser, User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 
@@ -39,4 +40,21 @@ const updateUserProfile = async (userId: string, userDetails: Pick<IUser, "name"
     }
 }
 
-export const profileService = { getUserProfile, updateUserProfile };
+const uploadProfilePic = async (userId: string, avatarLocalPath: string) => {
+    const result = await uploadOnCloudinary(avatarLocalPath, 'profiles/' + userId);
+
+    if (!result) {
+        throw new ApiError(400, "Avatar file is required!");
+    }
+
+    await User.findByIdAndUpdate(
+        userId,
+        {
+            avatar: result.secure_url
+        }
+    )
+
+    return true;
+}
+
+export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic };

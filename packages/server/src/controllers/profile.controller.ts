@@ -30,4 +30,20 @@ const updateUserProfile = asyncHandler(
     }
 )
 
-export const profileController = { getUserProfile, updateUserProfile };
+const uploadProfilePic = asyncHandler(
+    async (req: Request, res: Response) => {
+        const avatarLocalPath = req.file?.path;
+
+        if (!avatarLocalPath) {
+            throw new ApiError(400, "Avatar file is required!");
+        }
+
+        const result = await profileService.uploadProfilePic(req.user as string, avatarLocalPath);
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Profile Picture Uploaded"))
+    }
+)
+
+export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic };
