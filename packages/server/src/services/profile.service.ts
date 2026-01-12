@@ -1,3 +1,4 @@
+import mongoose, { Schema } from "mongoose";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../lib/cloudinary.config";
 import { getCloudinaryPublicId } from "../lib/getCloudinaryPublicId";
 import { IUser, User } from "../models/user.model";
@@ -80,4 +81,62 @@ const deleteProfilePic = async (userId: string) => {
     }
 }
 
-export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic };
+const followUser = async (userId: string, userHandle: string) => {
+  const targetUser = await User.findOne({ handle: userHandle })
+    .select("_id name handle");
+
+  if (!targetUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (targetUser._id.equals(userId)) {
+    throw new ApiError(400, "You cannot follow yourself");
+  }
+
+  await Promise.all([
+    User.updateOne(
+      { _id: userId },
+      { $addToSet: { following: targetUser._id } }
+    ),
+    User.updateOne(
+      { _id: targetUser._id },
+      { $addToSet: { followers: userId } }
+    )
+  ]);
+
+  return {
+    id: targetUser._id,
+    name: targetUser.name,
+    handle: targetUser.handle
+  };
+};
+
+const unfollowUser = async (userId: string, userHandle: string) => {
+  const targetUser = await User.findOne({
+    handle: userHandle,
+    followers: userId
+  }).select("_id name handle");
+
+  if (!targetUser) {
+    throw new ApiError(404, "You are not following this user");
+  }
+
+  await Promise.all([
+    User.updateOne(
+      { _id: userId },
+      { $pull: { following: targetUser._id } }
+    ),
+    User.updateOne(
+      { _id: targetUser._id },
+      { $pull: { followers: userId } }
+    )
+  ]);
+
+  return {
+    id: targetUser._id,
+    name: targetUser.name,
+    handle: targetUser.handle
+  };
+};
+
+export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser };

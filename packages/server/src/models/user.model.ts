@@ -10,9 +10,9 @@ export interface IUser extends Document {
     handle: string;
     avatar?: string;
     bio?: string;
-    followers: Schema.Types.ObjectId[];
-    following: Schema.Types.ObjectId[];
-    joined_rooms: Schema.Types.ObjectId[];
+    followers: mongoose.Types.ObjectId[];
+    following: mongoose.Types.ObjectId[];
+    joined_rooms: mongoose.Types.ObjectId[];
     banned: boolean;
     warnings: number;
     verified: boolean;

@@ -41,8 +41,8 @@ const uploadProfilePic = asyncHandler(
         const result = await profileService.uploadProfilePic(req.user as string, avatarLocalPath);
 
         return res
-        .status(200)
-        .json(new ApiResponse(200, null, "Profile Picture Uploaded"))
+            .status(200)
+            .json(new ApiResponse(200, null, "Profile Picture Uploaded"))
     }
 )
 
@@ -51,9 +51,37 @@ const deleteProfilePic = asyncHandler(
         const result = await profileService.deleteProfilePic(req.user as string);
 
         return res
-        .status(200)
-        .json(new ApiResponse(200, null, "Profile Picture Removed"))
+            .status(200)
+            .json(new ApiResponse(200, null, "Profile Picture Removed"))
     }
 )
 
-export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic };
+const followUser = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { userHandle } = req.params;
+
+        if (!userHandle) {
+            throw new ApiError(400, "User handle is required");
+        } else {
+            const result = await profileService.followUser(req.user as string, userHandle);
+
+            return res
+                .status(200)
+                .json(new ApiResponse(200, null, "You followed " + result.name));
+        }
+    }
+)
+
+const unfollowUser = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { userHandle } = req.params;
+
+        const result = await profileService.unfollowUser(req.user as string, userHandle);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "You unfollowed " + result.name));
+    }
+)
+
+export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser };
