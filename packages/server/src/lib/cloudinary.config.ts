@@ -34,3 +34,14 @@ export const uploadOnCloudinary = async (localFilePath: string, folderName: stri
         throw new ApiError(500, (error as any).message || "File upload failed");
     }
 }
+
+// delete asset from cloudinary cloud
+export const deleteFromCloudinary = async (publicId: string) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    console.error("Cloudinary delete failed:", error);
+    throw error;
+  }
+}

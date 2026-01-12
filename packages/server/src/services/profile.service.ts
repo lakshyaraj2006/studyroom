@@ -1,4 +1,5 @@
-import { uploadOnCloudinary } from "../lib/cloudinary.config";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../lib/cloudinary.config";
+import { getCloudinaryPublicId } from "../lib/getCloudinaryPublicId";
 import { IUser, User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 
@@ -57,4 +58,26 @@ const uploadProfilePic = async (userId: string, avatarLocalPath: string) => {
     return true;
 }
 
-export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic };
+const deleteProfilePic = async (userId: string) => {
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    } else if (!user?.avatar) {
+        throw new ApiError(409, "User does not have a profile pic")
+    }
+    else {
+        const publicId = getCloudinaryPublicId(user?.avatar);
+
+        if (!publicId) return;
+
+        const result = await deleteFromCloudinary(publicId);
+        await User.findByIdAndUpdate(userId, {
+            $unset: { avatar: 1 }
+        })
+
+        return result;
+    }
+}
+
+export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic };

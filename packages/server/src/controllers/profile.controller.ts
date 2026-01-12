@@ -46,4 +46,14 @@ const uploadProfilePic = asyncHandler(
     }
 )
 
-export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic };
+const deleteProfilePic = asyncHandler(
+    async (req: Request, res: Response) => {
+        const result = await profileService.deleteProfilePic(req.user as string);
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200, null, "Profile Picture Removed"))
+    }
+)
+
+export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic };
