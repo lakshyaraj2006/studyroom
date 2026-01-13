@@ -10,5 +10,7 @@ router.route('/upload-avatar').post(checkAuth, upload.single('image'), profileCo
 router.route('/remove-avatar').delete(checkAuth, profileController.deleteProfilePic);
 router.route('/follow/:userHandle').post(checkAuth, profileController.followUser);
 router.route('/unfollow/:userHandle').delete(checkAuth, profileController.unfollowUser);
+router.route('/delete-code').post(checkAuth, profileController.sendDeleteUserProfileCode);
+router.route('/delete-confirm').delete(checkAuth, profileController.deleteUserProfileConfirm);
 
 export { router as profileRouter };

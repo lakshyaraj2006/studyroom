@@ -84,4 +84,32 @@ const unfollowUser = asyncHandler(
     }
 )
 
-export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser };
+const sendDeleteUserProfileCode = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        const result = await profileService.sendDeleteUserProfileCode(req.user as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Verification code sent"));
+    }
+)
+
+const deleteUserProfileConfirm = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { code } = req.body;
+
+        if (!code) {
+            throw new ApiError(400, "Verification code required")
+        }
+        else {
+            const result = await profileService.deleteUserProfileConfirm(req.user as string, code);
+
+            return res
+                .status(200)
+                .json(new ApiResponse(200, null, "Your account has been deleted"));
+        }
+    }
+)
+
+export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };

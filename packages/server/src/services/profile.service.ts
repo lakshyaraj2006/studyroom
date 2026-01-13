@@ -1,8 +1,11 @@
 import mongoose, { Schema } from "mongoose";
-import { deleteFromCloudinary, uploadOnCloudinary } from "../lib/cloudinary.config";
+import { deleteFromCloudinary, deleteUserProfileFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
 import { getCloudinaryPublicId } from "../lib/getCloudinaryPublicId";
 import { IUser, User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
+import { sendDeleteAccountEmail } from "../lib/emails/sendDeleteAccountEmailCode";
+import { generateVerificationCode } from "../lib/generateVerificationCode";
+import { sendVerificationEmail } from "../lib/emails/sendVerificationEmail";
 
 const getUserProfile = async (userHandle: string) => {
     if (!userHandle || userHandle === "") {
@@ -139,4 +142,53 @@ const unfollowUser = async (userId: string, userHandle: string) => {
   };
 };
 
-export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser };
+const sendDeleteUserProfileCode = async (userId: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User was not found!")
+  } else {
+    const verifyCode = generateVerificationCode(8);
+    const verifyCodeExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000);
+
+    user.verifyCode = verifyCode;
+    user.verifyCodeExpiry = verifyCodeExpiry;
+
+    await sendVerificationEmail(user.username, user.email, verifyCode);
+
+    await user.save();
+
+    return true;
+  }
+}
+
+const deleteUserProfileConfirm = async (userId: string, code: string) => {
+  const user = await User.findById(userId);
+
+  if (!user || user.is_deleted) {
+    throw new ApiError(404, "User was not found!");
+  } else {
+    if (user.verifyCode !== code) {
+      throw new ApiError(400, "Invalid Code");
+    } else { 
+      await sendDeleteAccountEmail(user.username, user.email);
+      await deleteUserProfileFolder(userId);
+      
+      user.name = "[deletedUser]";
+      user.username = `[deletedUser]_${user._id.toString().slice(-6)}`;
+      user.email = `deleted+${userId}@studyroom.com`;
+      user.password = undefined;
+      user.avatar = undefined;
+      user.bio = undefined;
+      user.verifyCode = undefined;
+      user.verifyCodeExpiry = undefined;
+      user.is_deleted = true;
+
+      await user.save();
+      
+      return true;
+    }
+  }
+}
+
+export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };

@@ -21,6 +21,7 @@ export interface IUser extends Document {
     password?: string;
     last_login?: Date;
     last_active?: Date;
+    is_deleted?: Boolean;
     createdAt: Date;
     updatedAt: Date;
 
@@ -62,7 +63,7 @@ const UserSchema = new Schema<IUser>({
         type: String,
         maxlength: 160
     },
-    
+
     followers: [
         { type: Schema.Types.ObjectId, ref: "User" }
     ],
@@ -99,6 +100,10 @@ const UserSchema = new Schema<IUser>({
     },
     last_active: {
         type: Date
+    },
+    is_deleted: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 
@@ -107,7 +112,7 @@ UserSchema.pre<IUser>("save", async function () {
         this.password = await argon2.hash(this.password);
     }
 
-    if (!this.handle && this.username) {
+    if (!this.handle && this.username && this.username !== "[deletedUser]") {
         const base = this.username.toLowerCase();
         let unique = false;
 
@@ -122,6 +127,7 @@ UserSchema.pre<IUser>("save", async function () {
             }
         }
     }
+
 });
 
 UserSchema.methods.verifyPassword = async function (password: string) {
@@ -132,7 +138,7 @@ UserSchema.methods.verifyPassword = async function (password: string) {
 UserSchema.methods.generateAccessToken = function () {
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("ACCESS_TOKEN_SECRET is not set in .env");
-    
+
     return jwt.sign(
         { id: this._id, handle: this.handle },
         secret,
@@ -143,7 +149,7 @@ UserSchema.methods.generateAccessToken = function () {
 UserSchema.methods.generateRefreshToken = function () {
     const secret = process.env.REFRESH_TOKEN_SECRET;
     if (!secret) throw new Error("REFRESH_TOKEN_SECRET is not set in .env");
-    
+
     return jwt.sign(
         { id: this._id },
         secret,
