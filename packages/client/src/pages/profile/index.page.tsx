@@ -11,6 +11,8 @@ import NotFoundPage from "../error/NotFound"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/hooks/useAuth"
 import { Edit2, LogOut } from "lucide-react";
+import useLogout from "@/hooks/useLogout";
+import { toast } from "sonner"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -21,6 +23,7 @@ export default function ProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const logout = useLogout();
 
     useEffect(() => {
         if (!userHandle) return
@@ -49,6 +52,15 @@ export default function ProfilePage() {
             setStatusCode(error.response?.status || 500);
         } finally {
             setLoading(false);
+        }
+    }
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            toast.success("Logged out successfully!");
+        } catch (error) {
+            console.log(error);
         }
     }
 
@@ -113,7 +125,7 @@ export default function ProfilePage() {
                                                 : <><Edit2 className="w-4 h-4" /> Edit Profile</>
                                         }
                                     </Button>
-                                <Button variant="secondary" className="w-full md:flex-1 flex items-center justify-center gap-2 cursor-pointer">
+                                <Button variant="secondary" className="w-full md:flex-1 flex items-center justify-center gap-2 cursor-pointer" onClick={handleLogout}>
                                     <LogOut className="w-4 h-4" />
                                     Logout
                                 </Button>
