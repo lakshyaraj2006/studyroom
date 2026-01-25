@@ -14,6 +14,7 @@ import useLogout from "@/hooks/useLogout";
 import { toast } from "sonner"
 import ProfileAvatar from "@/components/profile/profile-avatar.component"
 import EditProfileComponent from "@/components/profile/edit-profile.component"
+import FollowUnfollowComponet from "@/components/profile/follow-unfollow.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -23,6 +24,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(false);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
     const logout = useLogout();
 
     useEffect(() => {
@@ -30,6 +32,15 @@ export default function ProfilePage() {
         getUsrProfile();
 
     }, [userHandle])
+
+    useEffect(() => {
+        if (!profile?.followers || !usrInfo?.id) {
+            setIsFollowing(false);
+            return;
+        }
+
+        setIsFollowing(profile.followers.includes(usrInfo.id));
+    }, [profile, usrInfo]);
 
     const getUsrProfile = async () => {
         setLoading(true);
@@ -43,6 +54,7 @@ export default function ProfilePage() {
 
             setStatusCode(response.status);
             setProfile(data);
+            
             if (usrInfo) {
                 setIsOwnProfile(data._id === usrInfo.id);
             } else {
@@ -98,6 +110,15 @@ export default function ProfilePage() {
                             </span>
                         </div>
 
+                        {!isOwnProfile && authToken && <div className="mt-3">
+                            <FollowUnfollowComponet
+                                isFollowing={isFollowing}
+                                setIsFollowing={setIsFollowing}
+                                usrHandle={profile?.handle as string}
+                                getUsrProfile={getUsrProfile}
+                            />
+                        </div>}
+
                         {authToken && isOwnProfile && (
                             <div className="flex items-center gap-2 w-full mt-6">
                                 <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
@@ -119,7 +140,6 @@ export default function ProfilePage() {
                 {/* Right section */}
                 <Card className="md:col-span-2">
                     <CardContent className="p-6 space-y-5">
-
                         {
                             isEditing
                                 ? <EditProfileComponent
