@@ -13,6 +13,7 @@ import { Edit2, LogOut } from "lucide-react";
 import useLogout from "@/hooks/useLogout";
 import { toast } from "sonner"
 import ProfileAvatar from "@/components/profile/profile-avatar.component"
+import EditProfileComponent from "@/components/profile/edit-profile.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -99,13 +100,13 @@ export default function ProfilePage() {
 
                         {authToken && isOwnProfile && (
                             <div className="flex items-center gap-2 w-full mt-6">
-                                    <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
-                                        {
-                                            isEditing
-                                                ? <><XIcon className="w-4 h-4" /> Cancel</>
-                                                : <><Edit2 className="w-4 h-4" /> Edit Profile</>
-                                        }
-                                    </Button>
+                                <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
+                                    {
+                                        isEditing
+                                            ? <><XIcon className="w-4 h-4" /> Cancel</>
+                                            : <><Edit2 className="w-4 h-4" /> Edit Profile</>
+                                    }
+                                </Button>
                                 <Button variant="secondary" className="w-full md:flex-1 flex items-center justify-center gap-2 cursor-pointer" onClick={handleLogout}>
                                     <LogOut className="w-4 h-4" />
                                     Logout
@@ -121,7 +122,11 @@ export default function ProfilePage() {
 
                         {
                             isEditing
-                                ? <p>Editing Profile...</p>
+                                ? <EditProfileComponent
+                                    setIsEditing={setIsEditing}
+                                    profile={profile}
+                                    getUsrProfile={getUsrProfile}
+                                />
                                 : <>
                                     <div>
                                         <p className="text-sm text-muted-foreground">Username</p>

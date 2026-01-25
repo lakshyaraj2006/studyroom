@@ -22,7 +22,7 @@ const getUserProfile = async (userHandle: string) => {
 }
 
 const updateUserProfile = async (userId: string, userDetails: Pick<IUser, "name" | "handle" | "bio">) => {
-    let user = await User.findOne({ handle: userDetails.handle });
+    let user = await User.findOne({ handle: userDetails.handle, _id: { $ne: userId } });
 
     if (user) {
         throw new ApiError(400, "Handle is already in use")
