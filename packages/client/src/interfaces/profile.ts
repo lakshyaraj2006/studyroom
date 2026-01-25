@@ -12,7 +12,7 @@ export interface Profile {
     joined_rooms: string[],
     last_login: string,
     last_active: string,
-    avatarUrl?: string,
+    avatar?: string,
     verified: boolean,
     createdAt: Date,
     updatedAt: Date

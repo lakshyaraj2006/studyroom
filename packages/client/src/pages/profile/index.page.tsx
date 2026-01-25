@@ -1,11 +1,10 @@
 import axiosInstance from "@/lib/api"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Camera, XIcon } from "lucide-react"
+import { XIcon } from "lucide-react"
 import type { Profile } from "@/interfaces/profile"
 import NotFoundPage from "../error/NotFound"
 import { Spinner } from "@/components/ui/spinner"
@@ -13,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { Edit2, LogOut } from "lucide-react";
 import useLogout from "@/hooks/useLogout";
 import { toast } from "sonner"
+import ProfileAvatar from "@/components/profile/profile-avatar.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -20,7 +20,6 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [statusCode, setStatusCode] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isOwnProfile, setIsOwnProfile] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const logout = useLogout();
@@ -79,31 +78,13 @@ export default function ProfilePage() {
                 {/* Left section */}
                 <Card className="md:col-span-1">
                     <CardContent className="flex flex-col items-center pt-8">
-                        <div className="relative">
-                            <Avatar className="w-32 h-32">
-                                <AvatarImage src={profile?.avatarUrl || "/user.png"} />
-                                <AvatarFallback>U</AvatarFallback>
-                            </Avatar>
-
-                            {isOwnProfile && isEditing && (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="absolute bottom-1 right-1 bg-background border rounded-full p-2 shadow hover:bg-muted transition"
-                                    >
-                                        <Camera className="w-4 h-4" />
-                                    </button>
-
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        hidden
-                                    />
-                                </>
-                            )}
-                        </div>
+                        <ProfileAvatar
+                            avatar={profile?.avatar}
+                            isOwnProfile={isOwnProfile}
+                            isEditing={isEditing}
+                            onUpdated={getUsrProfile}
+                            setIsEditing={setIsEditing}
+                        />
 
                         <h2 className="mt-4 text-xl font-semibold">{profile?.name}</h2>
 
