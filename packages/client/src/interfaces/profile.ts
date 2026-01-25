@@ -1,0 +1,19 @@
+export interface Profile {
+    _id: string,
+    name: string,
+    username: string,
+    email: string,
+    banned: string,
+    warnings: number,
+    handle: string,
+    bio: string,
+    followers: string[],
+    following: string[],
+    joined_rooms: string[],
+    last_login: string,
+    last_active: string,
+    avatarUrl?: string,
+    verified: boolean,
+    createdAt: Date,
+    updatedAt: Date
+}
