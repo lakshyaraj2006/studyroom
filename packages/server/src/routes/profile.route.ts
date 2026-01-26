@@ -11,6 +11,6 @@ router.route('/remove-avatar').delete(checkAuth, profileController.deleteProfile
 router.route('/follow/:userHandle').post(checkAuth, profileController.followUser);
 router.route('/unfollow/:userHandle').delete(checkAuth, profileController.unfollowUser);
 router.route('/delete-code').post(checkAuth, profileController.sendDeleteUserProfileCode);
-router.route('/delete-confirm').delete(checkAuth, profileController.deleteUserProfileConfirm);
+router.route('/delete-confirm').post(checkAuth, profileController.deleteUserProfileConfirm);
 
 export { router as profileRouter };

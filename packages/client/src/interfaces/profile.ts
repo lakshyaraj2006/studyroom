@@ -14,6 +14,7 @@ export interface Profile {
     last_active: string,
     avatar?: string,
     verified: boolean,
+    is_deleted: false,
     createdAt: Date,
     updatedAt: Date
 }

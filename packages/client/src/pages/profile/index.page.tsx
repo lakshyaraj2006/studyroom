@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import ProfileAvatar from "@/components/profile/profile-avatar.component"
 import EditProfileComponent from "@/components/profile/edit-profile.component"
 import FollowUnfollowComponet from "@/components/profile/follow-unfollow.component"
+import DeleteProfileComponent from "@/components/profile/delete-profile.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -110,7 +111,7 @@ export default function ProfilePage() {
                             </span>
                         </div>
 
-                        {!isOwnProfile && authToken && <div className="mt-3">
+                        {!isOwnProfile && authToken && !profile?.is_deleted && <div className="mt-3">
                             <FollowUnfollowComponet
                                 isFollowing={isFollowing}
                                 setIsFollowing={setIsFollowing}
@@ -119,7 +120,7 @@ export default function ProfilePage() {
                             />
                         </div>}
 
-                        {authToken && isOwnProfile && (
+                        {authToken && isOwnProfile && !profile?.is_deleted && (
                             <div className="flex items-center gap-2 w-full mt-6">
                                 <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
                                     {
@@ -181,6 +182,14 @@ export default function ProfilePage() {
                                             <p className="font-medium">—</p>
                                         </div>
                                     </div>
+
+                                    {
+                                        isOwnProfile && !profile?.is_deleted &&
+                                        <DeleteProfileComponent
+                                            email={profile?.email as string}
+                                            getUsrProfile={getUsrProfile}
+                                        />
+                                    }
                                 </>
                         }
                     </CardContent>
