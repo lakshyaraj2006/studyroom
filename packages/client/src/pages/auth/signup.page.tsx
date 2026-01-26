@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 type LoadingAction = "signup" | "verify" | "resend" | null;
 
 export default function SignUp() {
-    const { signup, verifyEmail, setAuthToken, resendCode } = useAuth();
+    const { signup, verifyEmail, setAuthToken, resendCode, setUsrInfo } = useAuth();
     const [mode, setMode] = useState<"signup" | "code">("signup");
     const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
     const [credentials, setCredentials] = useState<SignUpUserCredentials>({
@@ -64,7 +64,7 @@ export default function SignUp() {
         setLoadingAction("verify");
 
         try {
-            const { success, message, data: { accessToken } } =
+            const { success, message, data: { accessToken, id, username, avatar } } =
                 await verifyEmail(credentials.email, credentials.code);
 
             if (success) {
@@ -80,6 +80,7 @@ export default function SignUp() {
 
                 setTimeout(() => {
                     setAuthToken(accessToken);
+                    setUsrInfo({ id, username, avatar });
                 }, 2000);
             } else {
                 toast.error(message, { duration: 2000 });

@@ -1,8 +1,8 @@
 import axios from "@/lib/api";
-import {useAuth} from "./useAuth";
+import { useAuth } from "./useAuth";
 
 const useLogout = () => {
-    const {authToken, setAuthToken} = useAuth();
+    const { authToken, setAuthToken, setUsrInfo } = useAuth();
 
     const logout = async () => {
         try {
@@ -14,6 +14,7 @@ const useLogout = () => {
             });
 
             setAuthToken(null);
+            setUsrInfo(null);
         } catch (error) {
             console.log(error);
         }

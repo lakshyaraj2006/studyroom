@@ -11,7 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
 
 export default function SignIn() {
-    const { signin, setAuthToken } = useAuth();
+    const { signin, setAuthToken, setUsrInfo } = useAuth();
     const [loading, setLoading] = useState(false);
     const [credentials, setCredentials] = useState<SignInUserCredentials>({
         identifier: "",
@@ -29,7 +29,7 @@ export default function SignIn() {
         setLoading(true);
 
         try {
-            const { success, message, data: { accessToken } } = await signin(credentials);
+            const { success, message, data: { accessToken, id, username, avatar } } = await signin(credentials);
             if (success) {
                 toast.success(message, { duration: 2000 });
                 setCredentials({
@@ -39,6 +39,7 @@ export default function SignIn() {
 
                 setTimeout(() => {
                     setAuthToken(accessToken);
+                    setUsrInfo({ id, username, avatar });
                 }, 2000);
             } else {
                 toast.error(message, { duration: 2000 });

@@ -4,6 +4,8 @@ import { connectDB } from "./lib/db";
 import cookieParser from "cookie-parser";
 import { userRouter } from "./routes/user.route";
 import cors from "cors";
+import { profileRouter } from "./routes/profile.route";
+import { errorHandler } from "./middlewares";
 
 connectDB()
 .then(() => {
@@ -13,13 +15,16 @@ connectDB()
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
-
+    
     app.use(cors({
         credentials: true,
         origin: process.env.FRONTEND_URL
     }))
     
     app.use("/api/v1/users", userRouter);
+    app.use("/api/v1/profile", profileRouter);
+    
+    app.use(errorHandler);
 
     app.listen(port, () => {
         console.log(`StudyRoom server listening on port ${port}`);

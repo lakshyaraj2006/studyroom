@@ -1,0 +1,19 @@
+<mjml>
+  <mj-body background-color="#f4f4f4">
+    <mj-section background-color="#ffffff" padding="24px">
+      <mj-column>
+        <mj-text font-size="18px" font-family="Poppins, Arial">
+          Hello, {{username}}
+        </mj-text>
+
+        <mj-text>
+          We are sorry to see you go :(
+        </mj-text>
+
+        <mj-text color="red">
+            Your StudyRoom account has been deleted permanently!
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
