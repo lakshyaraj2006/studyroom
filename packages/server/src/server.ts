@@ -6,6 +6,7 @@ import { userRouter } from "./routes/user.route";
 import cors from "cors";
 import { profileRouter } from "./routes/profile.route";
 import { errorHandler } from "./middlewares";
+import { roomRouter } from "./routes/room.route";
 
 connectDB()
 .then(() => {
@@ -23,6 +24,7 @@ connectDB()
     
     app.use("/api/v1/users", userRouter);
     app.use("/api/v1/profile", profileRouter);
+    app.use("/api/v1/rooms", roomRouter);
     
     app.use(errorHandler);
 
