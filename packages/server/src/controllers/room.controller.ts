@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../utils/AsyncHandler";
 import { roomService } from "../services/room.service";
 import { ApiResponse } from "../utils/ApiResponse";
+import { ApiError } from "../utils/ApiError";
 
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {
@@ -19,4 +20,26 @@ const createRoom = asyncHandler(
     }
 )
 
-export const roomController = { createRoom };
+const getRooms = asyncHandler(
+    async (req: Request, res: Response) => {
+        const result = await roomService.getRooms();
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Room created successfully"));
+    }
+)
+
+const getRoom = asyncHandler(
+    async (req: Request, res: Response) => {
+        
+        const {roomId} = req.params;
+        const result = await roomService.getRoom(roomId, req.user);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Room fetched"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom };
