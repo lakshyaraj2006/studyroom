@@ -9,5 +9,6 @@ router.route('/create').post(checkAuth, upload.single("image"), roomController.c
 router.route('/').get(roomController.getRooms);
 router.route('/:roomId').get(checkAuthOptional, roomController.getRoom);
 router.route('/update/:roomId').patch(checkAuth, upload.single("image"), roomController.updateRoom);
+router.route('/delete/:roomId').delete(checkAuth, roomController.deleteRoom);
 
 export { router as roomRouter };

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { uploadOnCloudinary } from "../lib/cloudinary.config";
 import { AccessType, Room } from "../models/room.model";
 import { ApiError } from "../utils/ApiError";
+import { User } from "../models/user.model";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
@@ -115,4 +116,26 @@ const updateRoom = async (userId: string, roomId: string, roomData: {
     return updatedRoom;
 };
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom };
+const deleteRoom = async (userId: string, roomId: string) => {
+    const room = await Room.findById(roomId).lean();
+
+    if (!room) {
+        throw new ApiError(404, "Room not found");
+    }
+
+    if (room.room_creator.toString() != userId) {
+        throw new ApiError(401, "You cannot modify this room")
+    }
+
+    await Promise.all([
+        User.updateMany(
+        { joined_rooms: room._id },
+        { $pull: { joined_rooms: room._id } }
+        ),
+        Room.findByIdAndDelete(roomId)
+    ]);
+
+    return true;
+};
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom };

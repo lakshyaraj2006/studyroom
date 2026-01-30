@@ -48,7 +48,8 @@ const updateRoom = asyncHandler(
         const {roomId} = req.params;
         const {name, topics, tagline, access_type} = req.body;
 
-        const parsedTopics = JSON.parse(topics);
+        let parsedTopics: string[] | undefined = undefined
+        if (topics) parsedTopics = JSON.parse(topics);
         const roomData = {name, topics: parsedTopics, tagline, imageLocalPath, access_type};
 
         const result = await roomService.updateRoom(req.user as string, roomId, roomData);
@@ -59,4 +60,16 @@ const updateRoom = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom };
+const deleteRoom = asyncHandler(
+    async (req: Request, res: Response) => {
+        const {roomId} = req.params;
+
+        const result = await roomService.deleteRoom(req.user as string, roomId);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Room deleted successfully"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom };
