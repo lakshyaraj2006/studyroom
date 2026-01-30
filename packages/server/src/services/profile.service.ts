@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { deleteFromCloudinary, deleteUserProfileFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
+import { deleteFromCloudinary, deleteCloudinaryFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
 import { getCloudinaryPublicId } from "../lib/getCloudinaryPublicId";
 import { IUser, User } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
@@ -172,7 +172,7 @@ const deleteUserProfileConfirm = async (userId: string, code: string) => {
       throw new ApiError(400, "Invalid Code");
     } else { 
       await sendDeleteAccountEmail(user.username, user.email);
-      await deleteUserProfileFolder(userId);
+      await deleteCloudinaryFolder('StudyRoom/profiles/' + userId);
       
       user.name = "[deletedUser]";
       user.username = `[deletedUser]_${user._id.toString().slice(-6)}`;
