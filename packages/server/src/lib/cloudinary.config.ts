@@ -46,15 +46,13 @@ export const deleteFromCloudinary = async (publicId: string) => {
     }
 }
 
-// delete user profile images folder
-export const deleteUserProfileFolder = async (userId: string) => {
-  const prefix = 'StudyRoom/profiles/' + userId;
-
+// delete the cloudinary folder
+export const deleteCloudinaryFolder = async (folderPrefix: string) => {
   try {
-    await cloudinary.api.delete_resources_by_prefix(prefix, { resource_type: "image" });
+    await cloudinary.api.delete_resources_by_prefix(folderPrefix, { resource_type: "image" });
 
     try {
-      await cloudinary.api.delete_folder(prefix);
+      await cloudinary.api.delete_folder(folderPrefix);
     } catch (err: any) {
       if (!((err?.error?.message || JSON.stringify(err)).toLowerCase().includes("can't find folder"))) {
         throw err;

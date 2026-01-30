@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { uploadOnCloudinary } from "../lib/cloudinary.config";
+import { deleteCloudinaryFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
 import { AccessType, Room } from "../models/room.model";
 import { ApiError } from "../utils/ApiError";
 import { User } from "../models/user.model";
@@ -129,9 +129,10 @@ const deleteRoom = async (userId: string, roomId: string) => {
 
     await Promise.all([
         User.updateMany(
-        { joined_rooms: room._id },
-        { $pull: { joined_rooms: room._id } }
+            { joined_rooms: room._id },
+            { $pull: { joined_rooms: room._id } }
         ),
+        deleteCloudinaryFolder('StudyRoom/rooms/' + roomId),
         Room.findByIdAndDelete(roomId)
     ]);
 
