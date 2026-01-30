@@ -35,11 +35,28 @@ const getRoom = asyncHandler(
         
         const {roomId} = req.params;
         const result = await roomService.getRoom(roomId, req.user);
-
+        
         return res
-            .status(200)
-            .json(new ApiResponse(200, result, "Room fetched"));
+        .status(200)
+        .json(new ApiResponse(200, result, "Room fetched"));
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom };
+const updateRoom = asyncHandler(
+    async (req: Request, res: Response) => {
+        const imageLocalPath = req.file?.path;
+        const {roomId} = req.params;
+        const {name, topics, tagline, access_type} = req.body;
+
+        const parsedTopics = JSON.parse(topics);
+        const roomData = {name, topics: parsedTopics, tagline, imageLocalPath, access_type};
+
+        const result = await roomService.updateRoom(req.user as string, roomId, roomData);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Room updated successfully"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom };

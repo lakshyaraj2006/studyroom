@@ -8,5 +8,6 @@ const router = Router();
 router.route('/create').post(checkAuth, upload.single("image"), roomController.createRoom);
 router.route('/').get(roomController.getRooms);
 router.route('/:roomId').get(checkAuthOptional, roomController.getRoom);
+router.route('/update/:roomId').patch(checkAuth, upload.single("image"), roomController.updateRoom);
 
 export { router as roomRouter };

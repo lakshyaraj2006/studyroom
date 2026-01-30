@@ -9,7 +9,7 @@ const createRoom = async (userId: string, roomData: {
     tagline: string,
     imageLocalPath?: string
 }) => {
-    let uplodedFileUrl: string | undefined;
+    let uploadedFileUrl: string | undefined;
 
 
     const newRoom = new Room({
@@ -23,8 +23,8 @@ const createRoom = async (userId: string, roomData: {
         try {
             const uploadFileResult = await uploadOnCloudinary(roomData.imageLocalPath, 'rooms/' + newRoom._id.toString());
 
-            uplodedFileUrl = uploadFileResult?.url;
-            newRoom.room_image = uplodedFileUrl;
+            uploadedFileUrl = uploadFileResult?.url;
+            newRoom.room_image = uploadedFileUrl;
         } catch (error) {
             throw new ApiError(500, "Image upload failed!");
         }
@@ -46,8 +46,8 @@ const getRoom = async (roomId: string, userId?: string | undefined) => {
 
     if (!room) {
         throw new ApiError(404, "Room not found");
-    } 
-    
+    }
+
     if (room.access_type === AccessType.PRIVATE) {
         if (!userId) {
             throw new ApiError(401, "Login required to access this room");
@@ -61,8 +61,58 @@ const getRoom = async (roomId: string, userId?: string | undefined) => {
             throw new ApiError(401, "Access denied to private room!");
         }
     }
-    
+
     return room;
 }
 
-export const roomService = { createRoom, getRooms, getRoom };
+const updateRoom = async (userId: string, roomId: string, roomData: {
+    name?: string,
+    topics?: string[],
+    tagline?: string,
+    imageLocalPath?: string,
+    access_type?: AccessType.PRIVATE | AccessType.PUBLIC
+}) => {
+    const room = await Room.findById(roomId).lean();
+
+    if (!room) {
+        throw new ApiError(404, "Room not found");
+    }
+
+    if (room.room_creator.toString() != userId) {
+        throw new ApiError(401, "You cannot modify this room")
+    }
+
+    let uploadedFileUrl: string | undefined;
+
+    if (roomData.imageLocalPath) {
+        try {
+            const uploadFileResult = await uploadOnCloudinary(roomData.imageLocalPath, 'rooms/' + room._id.toString());
+
+            uploadedFileUrl = uploadFileResult?.url;
+        } catch (error) {
+            throw new ApiError(500, "Image upload failed!");
+        }
+    }
+
+    const { topics, imageLocalPath, ...rest } = roomData;
+
+    const room_topics = topics ? Array.from(new Set(topics)) : room.room_topics;
+
+    const updatedRoom = await Room.findByIdAndUpdate(
+        roomId,
+        {
+            $set: {
+                ...rest,
+                room_topics,
+                room_image: uploadedFileUrl ? uploadedFileUrl : room.room_image
+            }
+        },
+        {
+            new: true
+        }
+    );
+
+    return updatedRoom;
+};
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom };
