@@ -1,0 +1,39 @@
+<mjml>
+  <mj-body background-color="#f4f4f4">
+    <mj-section background-color="#ffffff" padding="24px">
+      <mj-column>
+        <mj-text font-size="18px" font-family="Poppins, Arial">
+          Hello, {{username}}
+        </mj-text>
+
+        <mj-text>
+          You have been invited to join {{room_name}} room!
+        </mj-text>
+
+        <mj-text>
+          Ignore this email if it was not you.
+        </mj-text>
+
+        <mj-text>
+          <a href="{{link}}" target="_blank">Click Here!</a>
+        </mj-text>
+
+        <mj-text>
+          OR
+        </mj-text>
+
+        <mj-text>
+          Paste this url: {{link}}
+        </mj-text>
+
+        <mj-text>
+          The code will expire after 8 hours.
+        </mj-text>
+
+        <mj-text color="red">
+          Please do not share your code with anyone else.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

@@ -4,6 +4,7 @@ export interface IRoomInvite extends Document {
     room_id: mongoose.Types.ObjectId,
     room_invite_token: string,
     room_invite_token_expiry: Date,
+    sent_to_user: mongoose.Types.ObjectId,
     createdAt: Date,
     updatedAt: Date
 }
@@ -16,6 +17,11 @@ const RoomInviteSchema = new Schema<IRoomInvite>({
     },
     room_invite_token: {
         type: String,
+        required: true
+    },
+    sent_to_user: {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
         required: true
     },
     room_invite_token_expiry: {

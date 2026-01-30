@@ -72,4 +72,16 @@ const deleteRoom = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom };
+const sendInvite = asyncHandler(
+    async (req: Request, res: Response) => {
+        const {roomId} = req.params;
+
+        const result = await roomService.sendInvite(req.body.email, req.params.roomId, req.protocol + '://' + req.host);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Room Invite sent to " + result));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite };

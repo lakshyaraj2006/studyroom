@@ -1,8 +1,10 @@
-import mongoose from "mongoose";
 import { deleteCloudinaryFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
 import { AccessType, Room } from "../models/room.model";
 import { ApiError } from "../utils/ApiError";
 import { User } from "../models/user.model";
+import crypto from "node:crypto";
+import { RoomInvite } from "../models/room-invite.model";
+import { sendRoomInviteEmail } from "../lib/emails/sendRoomInvite";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
@@ -139,4 +141,35 @@ const deleteRoom = async (userId: string, roomId: string) => {
     return true;
 };
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom };
+const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
+    const room = await Room.findById(roomId);
+    if (!room) {
+        throw new ApiError(404, "Room not found!");
+    }
+
+    const user = await User.findOne({email: toEmail});
+
+    if (!user) {
+        throw new ApiError(404, "User not found!");
+    }
+
+    const invite_token = crypto.randomBytes(64).toString("base64url");
+    const invite_token_expiry = new Date(Date.now() + 1*60*60*1000);
+
+    // TODO: Generate url based on frotend host
+    const generatedUrl = baseUrl + '/api/v1/rooms/join-room/' + room._id.toString() + '/' + invite_token;
+
+    await Promise.all([
+        RoomInvite.create({
+            room_invite_token: invite_token,
+            room_invite_token_expiry: invite_token_expiry,
+            room_id: room._id,
+            sent_to_user: user._id
+        }),
+        sendRoomInviteEmail(user.username, toEmail, room.room_name, generatedUrl)
+    ]);
+
+    return user.name;
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite };
