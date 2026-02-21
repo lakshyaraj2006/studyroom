@@ -153,6 +153,10 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
         throw new ApiError(404, "User not found!");
     }
 
+    if (room.room_creator.toString() === user._id.toString()) {
+        throw new ApiError(401, "You cannot invite yourself!");
+    }
+
     const invite_token = crypto.randomBytes(64).toString("base64url");
     const invite_token_expiry = new Date(Date.now() + 1*60*60*1000);
 
@@ -172,4 +176,47 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
     return user.name;
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite };
+const acceptInvite = async (userId: string, roomId: string, token: string) => {
+    
+    const room = await Room.findById(roomId);
+    if (!room) {
+        throw new ApiError(404, "Room not found!");
+    }
+    
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found!");
+    }
+
+    const roomInvitation = await RoomInvite.findOne({room_id: roomId, room_invite_token: token});
+    if (!roomInvitation) {
+        throw new ApiError(404, "Room invitation not found!")
+    }
+    
+    if (roomInvitation.room_invite_token_expiry && roomInvitation.room_invite_token_expiry < new Date()) {
+        throw new ApiError(410, "Invitation expired!");
+    }
+
+    if (roomInvitation.sent_to_user.toString() !== userId) {
+        throw new ApiError(401, "Unauthorized access to invitation!");
+    }
+
+
+    await Promise.all([
+        roomInvitation.deleteOne(),
+        room.updateOne({
+            $addToSet: {
+                room_users: userId
+            }
+        }),
+        user.updateOne({
+            $addToSet: {
+                joined_rooms: room._id
+            }
+        })
+    ]);
+
+    return room.room_name;
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite };

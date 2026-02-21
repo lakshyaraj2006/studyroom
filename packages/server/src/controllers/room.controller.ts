@@ -84,4 +84,16 @@ const sendInvite = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite };
+const acceptInvite = asyncHandler(
+    async (req: Request, res: Response) => {
+        const {roomId} = req.params;
+
+        const result = await roomService.acceptInvite(req.user as string, req.params.roomId, req.params.token);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "You have joined " + result + " room"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite };
