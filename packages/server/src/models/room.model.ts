@@ -9,6 +9,7 @@ export interface IRoom extends Document {
     room_name: string,
     room_creator: mongoose.Types.ObjectId,
     room_users: mongoose.Types.ObjectId[],
+    blocked_users: mongoose.Types.ObjectId[],
     room_topics: string[],
     room_tagline: string,
     access_type: AccessType,
@@ -32,6 +33,10 @@ const RoomSchema = new Schema<IRoom>(
 
         room_users: { 
             type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+        },
+
+        blocked_users: {
+            type: [{type: Schema.Types.ObjectId, ref: "User"}]
         },
 
         room_topics: { 
