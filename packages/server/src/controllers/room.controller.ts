@@ -108,4 +108,14 @@ const rejectInvite = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite };
+const removeUser = asyncHandler(
+    async (req: Request, res: Response) => {
+        const result = await roomService.removeUser(req.user as string, req.body.userToRemoveId, req.params.roomId);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, result + " was removed from the room!"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser };

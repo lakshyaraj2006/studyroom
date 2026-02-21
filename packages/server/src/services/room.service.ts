@@ -258,4 +258,40 @@ const rejectInvite = async (userId: string, roomId: string, token: string) => {
     return room.room_name;
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite };
+const removeUser = async (userId: string, userToRemoveId: string, roomId: string) => {
+    const room = await Room.findById(roomId);
+    if (!room) {
+        throw new ApiError(404, "Room not found!");
+    }
+
+    if (room.room_creator.toString() !== userId) {
+        throw new ApiError(401, "You are not authorized to perform this action!");
+    }
+
+    const userToRemove = await User.findById(userToRemoveId);
+
+    if (!userToRemove) {
+        throw new ApiError(404, "User not found!");
+    }
+
+    if (!room.room_users.includes(new mongoose.Types.ObjectId(userToRemoveId))) {
+        throw new ApiError(400, userToRemove.name + " has not joined the room!");
+    }
+
+    await Promise.all([
+        await room.updateOne({
+            $pull: {
+                room_users: userToRemoveId
+            }
+        }),
+        await userToRemove.updateOne({
+            $pull: {
+                joined_rooms: roomId
+            }
+        })
+    ])
+
+    return userToRemove.name;
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser };
