@@ -6,32 +6,40 @@
           Hello, {{username}}
         </mj-text>
 
-        <mj-text>
+        <mj-text font-family="Poppins, Arial">
           You have been invited to join {{room_name}} room!
         </mj-text>
 
-        <mj-text>
+        <mj-text font-family="Poppins, Arial">
           Ignore this email if it was not you.
         </mj-text>
 
-        <mj-text>
-          <a href="{{link}}" target="_blank">Click Here!</a>
+        <mj-text padding-top="16px">
+          <table cellspacing="0" cellpadding="0" style="margin: auto;">
+            <tr>
+              <td>
+                <a href="{{accept_link}}" 
+                   style="background-color:#1a73e8; color:#ffffff; font-family:Courier New, monospace; font-size:16px; text-decoration:none; padding:12px 24px; display:inline-block; border-radius:4px;">
+                  Accept
+                </a>
+              </td>
+              <td width="16"></td> <!-- spacer -->
+              <td>
+                <a href="{{reject_link}}" 
+                   style="background-color:#e53935; color:#ffffff; font-family:Courier New, monospace; font-size:16px; text-decoration:none; padding:12px 24px; display:inline-block; border-radius:4px;">
+                  Reject
+                </a>
+              </td>
+            </tr>
+          </table>
         </mj-text>
 
-        <mj-text>
-          OR
+        <mj-text font-family="Poppins, Arial" padding-top="16px">
+          The links will expire after 24 hours.
         </mj-text>
 
-        <mj-text>
-          Paste this url: {{link}}
-        </mj-text>
-
-        <mj-text>
-          The code will expire after 8 hours.
-        </mj-text>
-
-        <mj-text color="red">
-          Please do not share your code with anyone else.
+        <mj-text color="red" font-family="Poppins, Arial">
+          Please do not share your invitation links with anyone else.
         </mj-text>
       </mj-column>
     </mj-section>

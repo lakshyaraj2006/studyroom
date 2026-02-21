@@ -12,5 +12,6 @@ router.route('/update/:roomId').patch(checkAuth, upload.single("image"), roomCon
 router.route('/delete/:roomId').delete(checkAuth, roomController.deleteRoom);
 router.route('/send-invite/:roomId').post(checkAuth, roomController.sendInvite);
 router.route('/accept-invite/:roomId/:token').post(checkAuth, roomController.acceptInvite);
+router.route('/reject-invite/:roomId/:token').post(checkAuth, roomController.rejectInvite);
 
 export { router as roomRouter };

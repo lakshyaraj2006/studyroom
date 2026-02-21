@@ -5,13 +5,15 @@ export const sendRoomInviteEmail = async (
   username: string,
   email: string,
   room_name: string,
-  link: string
+  accept_link: string,
+  reject_link: string
 ): Promise<boolean> => {
   try {
     const html = renderMjml("room-invite", {
       username,
       room_name,
-      link
+      accept_link,
+      reject_link
     })
 
     const info = await transporter.sendMail({
