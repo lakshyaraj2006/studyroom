@@ -6,6 +6,7 @@ import crypto from "node:crypto";
 import { RoomInvite } from "../models/room-invite.model";
 import { sendRoomInviteEmail } from "../lib/emails/sendRoomInvite";
 import mongoose from "mongoose";
+import { sendRoomBlockedEmail } from "../lib/emails/sendRoomBlockedEmail";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
@@ -55,6 +56,10 @@ const getRoom = async (roomId: string, userId?: string | undefined) => {
     if (room.access_type === AccessType.PRIVATE) {
         if (!userId) {
             throw new ApiError(401, "Login required to access this room");
+        }
+
+        if (room.blocked_users?.includes(new mongoose.Types.ObjectId(userId))) {
+            throw new ApiError(403, "You are blocked from this room!");
         }
 
         const isMember = room.room_users.some(
@@ -152,6 +157,10 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
 
     if (!user) {
         throw new ApiError(404, "User not found!");
+    }
+
+    if (room.blocked_users?.includes(new mongoose.Types.ObjectId(user._id))) {
+        throw new ApiError(403, "The user has been blocked from room!");
     }
 
     if (room.room_users.includes(new mongoose.Types.ObjectId(user._id))) {
@@ -294,4 +303,48 @@ const removeUser = async (userId: string, userToRemoveId: string, roomId: string
     return userToRemove.name;
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser };
+const blockUser = async (userId: string, userToBlockId: string, roomId: string, reason: string) => {
+    if (!reason) throw new ApiError(400, "Please provide a reason!");
+    if (reason.split(/\s+/).length < 10) throw new ApiError(400, "Reason must contain atleast 10 words!");
+
+    const room = await Room.findById(roomId);
+
+    if (!room) throw new ApiError(404, "Room not found!");
+    
+    if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
+
+    const userToBlock = await User.findById(userToBlockId);
+    if (!userToBlock) throw new ApiError(404, "User not found!");
+
+    if (room.blocked_users?.includes(userToBlock._id)) {
+        throw new ApiError(400, "User is already blocked!");
+    }
+
+    await Promise.all([
+        room.updateOne({
+            $addToSet: {
+                blocked_users: userToBlock._id
+            },
+            $pull: {
+                room_users: userToBlock._id
+            }
+        }),
+
+        userToBlock.updateOne({
+            $pull: {
+                joined_rooms: room._id
+            }
+        }),
+
+        sendRoomBlockedEmail(
+            userToBlock.username,
+            userToBlock.email,
+            room.room_name,
+            reason
+        )
+    ]);
+
+    return userToBlock.name;
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser };

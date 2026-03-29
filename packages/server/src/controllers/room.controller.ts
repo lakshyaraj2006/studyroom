@@ -26,7 +26,7 @@ const getRooms = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, result, "Room created successfully"));
+            .json(new ApiResponse(200, result, "Rooms fetched successfully"));
     }
 )
 
@@ -118,4 +118,14 @@ const removeUser = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser };
+const blockUser = asyncHandler(
+    async (req: Request, res: Response) => {
+        const result = await roomService.blockUser(req.user as string, req.body.userToBlockId, req.params.roomId, req.body.reason);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, result + " was blocked from the room!"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser };

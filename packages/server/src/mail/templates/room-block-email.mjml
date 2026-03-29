@@ -1,0 +1,43 @@
+<mjml>
+  <mj-body background-color="#f4f4f4">
+    <mj-section>
+      <mj-column>
+
+        <mj-text font-size="20px" font-weight="bold">
+          Access Removed from Room
+        </mj-text>
+
+        <mj-text font-size="16px">
+          Hello {{username}},
+        </mj-text>
+
+        <mj-text font-size="16px">
+          You have been removed and blocked from the room:
+        </mj-text>
+
+        <mj-text font-size="18px" font-weight="bold" color="#d9534f">
+          {{roomName}}
+        </mj-text>
+
+        <mj-text font-size="16px">
+          <strong>Reason:</strong>
+        </mj-text>
+
+        <mj-text font-size="16px" color="#555">
+          {{reason}}
+        </mj-text>
+
+        <mj-divider border-color="#dddddd" />
+
+        <mj-text font-size="14px" color="#888">
+          If you believe this was a mistake, you may contact the room administrator.
+        </mj-text>
+
+        <mj-text font-size="14px" color="#888">
+          Thank you.
+        </mj-text>
+
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
