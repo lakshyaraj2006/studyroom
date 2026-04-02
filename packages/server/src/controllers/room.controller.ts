@@ -141,4 +141,18 @@ const getInvitations = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations };
+const revokeInvitation = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+        if (!req.body.sent_to_user) throw new ApiError(400, "Sent to user id is required!");
+
+        const { revokedUserName } = await roomService.revokeInvitation(req.user as string, req.body.sent_to_user as string, req.params.roomId as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, `Invitation revoked for ${revokedUserName || "user"}!`))
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation };

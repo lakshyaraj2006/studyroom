@@ -403,4 +403,48 @@ const getInvitations = async (userId: string, roomId: string) => {
     return invitations;
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations };
+const revokeInvitation = async (
+    userId: string,
+    sent_to_user: string,
+    room_id: string
+) => {
+    if (
+        !mongoose.isValidObjectId(sent_to_user) ||
+        !mongoose.isValidObjectId(room_id)
+    ) {
+        throw new ApiError(400, "Invalid user id or room id");
+    }
+
+    const ownerObjectId = new mongoose.Types.ObjectId(userId);
+    const sentToUserObjectId = new mongoose.Types.ObjectId(sent_to_user);
+    const roomObjectId = new mongoose.Types.ObjectId(room_id);
+
+    const roomExists = await Room.exists({
+        _id: roomObjectId,
+        room_creator: ownerObjectId
+    });
+
+    if (!roomExists) {
+        throw new ApiError(404, "Room not found or Unauthorized!");
+    }
+
+    // Fetch invitation + user details
+    const invitation = await RoomInvite.findOne({
+        sent_to_user: sentToUserObjectId,
+        room_id: roomObjectId
+    }).populate("sent_to_user", "name"); // adjust field if different
+
+    if (!invitation) {
+        throw new ApiError(404, "Invitation not found!");
+    }
+
+    const user = await User.findById(sentToUserObjectId).select("name");
+    const revokedUserName = user?.name;
+
+    await invitation.deleteOne();
+
+    return { revokedUserName };
+
+};
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation };
