@@ -447,4 +447,32 @@ const revokeInvitation = async (
 
 };
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation };
+const leaveRoom = async (userId: string, room_id: string) => {
+    if (!mongoose.isValidObjectId(room_id)) throw new ApiError(400, "Invalid room object id!");
+
+    const room = await Room.findById(room_id);
+    const user = await User.findById(userId);
+
+    if (!room) throw new ApiError(404, "Room not found!");
+    if (!user) throw new ApiError(404, "User not found!");
+
+    if (!room?.room_users.includes(new mongoose.Types.ObjectId(userId))) throw new ApiError(400, "You are not a member of this room!");
+
+    await Promise.all([
+        room.updateOne({
+            $pull: {
+                room_users: userId
+            }
+        }),
+
+        user.updateOne({
+            $pull: {
+                joined_rooms: room_id
+            }
+        }),
+    ])
+
+    return { roomName: room.room_name };
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation,leaveRoom };
