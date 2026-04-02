@@ -7,10 +7,10 @@ import { ApiError } from "../utils/ApiError";
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {
         const imageLocalPath = req.file?.path;
-        const {name, topics, tagline} = req.body;
+        const { name, topics, tagline } = req.body;
 
         const parsedTopics = JSON.parse(topics);
-        const roomData = {name, topics: parsedTopics, tagline, imageLocalPath};
+        const roomData = { name, topics: parsedTopics, tagline, imageLocalPath };
 
         const result = await roomService.createRoom(req.user as string, roomData);
 
@@ -32,25 +32,25 @@ const getRooms = asyncHandler(
 
 const getRoom = asyncHandler(
     async (req: Request, res: Response) => {
-        
-        const {roomId} = req.params;
+
+        const { roomId } = req.params;
         const result = await roomService.getRoom(roomId, req.user);
-        
+
         return res
-        .status(200)
-        .json(new ApiResponse(200, result, "Room fetched"));
+            .status(200)
+            .json(new ApiResponse(200, result, "Room fetched"));
     }
 )
 
 const updateRoom = asyncHandler(
     async (req: Request, res: Response) => {
         const imageLocalPath = req.file?.path;
-        const {roomId} = req.params;
-        const {name, topics, tagline, access_type} = req.body;
+        const { roomId } = req.params;
+        const { name, topics, tagline, access_type } = req.body;
 
         let parsedTopics: string[] | undefined = undefined
         if (topics) parsedTopics = JSON.parse(topics);
-        const roomData = {name, topics: parsedTopics, tagline, imageLocalPath, access_type};
+        const roomData = { name, topics: parsedTopics, tagline, imageLocalPath, access_type };
 
         const result = await roomService.updateRoom(req.user as string, roomId, roomData);
 
@@ -62,7 +62,7 @@ const updateRoom = asyncHandler(
 
 const deleteRoom = asyncHandler(
     async (req: Request, res: Response) => {
-        const {roomId} = req.params;
+        const { roomId } = req.params;
 
         const result = await roomService.deleteRoom(req.user as string, roomId);
 
@@ -74,7 +74,7 @@ const deleteRoom = asyncHandler(
 
 const sendInvite = asyncHandler(
     async (req: Request, res: Response) => {
-        const {roomId} = req.params;
+        const { roomId } = req.params;
 
         const result = await roomService.sendInvite(req.body.email, req.params.roomId, req.protocol + '://' + req.host);
 
@@ -86,7 +86,7 @@ const sendInvite = asyncHandler(
 
 const acceptInvite = asyncHandler(
     async (req: Request, res: Response) => {
-        const {roomId} = req.params;
+        const { roomId } = req.params;
 
         const result = await roomService.acceptInvite(req.user as string, req.params.roomId, req.params.token);
 
@@ -98,7 +98,7 @@ const acceptInvite = asyncHandler(
 
 const rejectInvite = asyncHandler(
     async (req: Request, res: Response) => {
-        const {roomId} = req.params;
+        const { roomId } = req.params;
 
         const result = await roomService.rejectInvite(req.user as string, req.params.roomId, req.params.token);
 
@@ -128,4 +128,17 @@ const blockUser = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser };
+const getInvitations = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+
+        const result = await roomService.getInvitations(req.user as string, req.params.roomId as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Invitations fetched successfully!"))
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations };

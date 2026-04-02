@@ -153,7 +153,7 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
         throw new ApiError(404, "Room not found!");
     }
 
-    const user = await User.findOne({email: toEmail});
+    const user = await User.findOne({ email: toEmail });
 
     if (!user) {
         throw new ApiError(404, "User not found!");
@@ -172,7 +172,7 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
     }
 
     const invite_token = crypto.randomBytes(64).toString("base64url");
-    const invite_token_expiry = new Date(Date.now() + 24*60*60*1000);
+    const invite_token_expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // TODO: Generate url based on frotend host
     const generatedAcceptUrl = baseUrl + '/api/v1/rooms/accept-invite/' + room._id.toString() + '/' + invite_token;
@@ -192,22 +192,22 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
 }
 
 const acceptInvite = async (userId: string, roomId: string, token: string) => {
-    
+
     const room = await Room.findById(roomId);
     if (!room) {
         throw new ApiError(404, "Room not found!");
     }
-    
+
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User not found!");
     }
 
-    const roomInvitation = await RoomInvite.findOne({room_id: roomId, room_invite_token: token});
+    const roomInvitation = await RoomInvite.findOne({ room_id: roomId, room_invite_token: token });
     if (!roomInvitation) {
         throw new ApiError(404, "Room invitation not found!")
     }
-    
+
     if (roomInvitation.room_invite_token_expiry && roomInvitation.room_invite_token_expiry < new Date()) {
         throw new ApiError(410, "Invitation expired!");
     }
@@ -235,22 +235,22 @@ const acceptInvite = async (userId: string, roomId: string, token: string) => {
 }
 
 const rejectInvite = async (userId: string, roomId: string, token: string) => {
-    
+
     const room = await Room.findById(roomId);
     if (!room) {
         throw new ApiError(404, "Room not found!");
     }
-    
+
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User not found!");
     }
 
-    const roomInvitation = await RoomInvite.findOne({room_id: roomId, room_invite_token: token});
+    const roomInvitation = await RoomInvite.findOne({ room_id: roomId, room_invite_token: token });
     if (!roomInvitation) {
         throw new ApiError(404, "Room invitation not found!")
     }
-    
+
     if (roomInvitation.room_invite_token_expiry && roomInvitation.room_invite_token_expiry < new Date()) {
         throw new ApiError(410, "Invitation expired!");
     }
@@ -310,7 +310,7 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
     const room = await Room.findById(roomId);
 
     if (!room) throw new ApiError(404, "Room not found!");
-    
+
     if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
 
     const userToBlock = await User.findById(userToBlockId);
@@ -347,4 +347,60 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
     return userToBlock.name;
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser };
+const getInvitations = async (userId: string, roomId: string) => {
+    if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(roomId)) {
+        throw new ApiError(400, "Invalid user id or room id!");
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const roomObjectId = new mongoose.Types.ObjectId(roomId);
+
+    const room = await Room.findOne({
+        _id: roomObjectId,
+        room_creator: userObjectId
+    });
+
+    if (!room) throw new ApiError(404, "Room not found or Unauthorized action!");
+
+    const pipeline: mongoose.PipelineStage[] = [
+        {
+            $match: {
+                "room_id": roomObjectId
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "sent_to_user",
+                foreignField: "_id",
+                as: "sent_to_user"
+            }
+        },
+        {
+            $unwind: "$sent_to_user"
+        },
+        {
+            $project: {
+                _id: 1,
+                sent_to_user: {
+                    _id: "$sent_to_user._id",
+                    name: "$sent_to_user.name",
+                    username: "$sent_to_user.username",
+                    avatar: "$sent_to_user.avatar",
+                    handle: "$sent_to_user.handle"
+                },
+                __v: 1,
+                createdAt: 1,
+                updatedAt: 1
+            }
+        },
+        {
+            $sort: { createdAt: -1 }
+        }
+    ];
+
+    const invitations = await RoomInvite.aggregate(pipeline);
+    return invitations;
+}
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations };

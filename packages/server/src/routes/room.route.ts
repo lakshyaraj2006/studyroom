@@ -15,5 +15,6 @@ router.route('/accept-invite/:roomId/:token').post(checkAuth, roomController.acc
 router.route('/reject-invite/:roomId/:token').delete(checkAuth, roomController.rejectInvite);
 router.route('/remove-user/:roomId/').delete(checkAuth, roomController.removeUser);
 router.route('/block-user/:roomId/').patch(checkAuth, roomController.blockUser);
+router.route('/get-invitations/:roomId/').get(checkAuth, roomController.getInvitations);
 
 export { router as roomRouter };
