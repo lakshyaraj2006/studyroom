@@ -347,6 +347,46 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
     return userToBlock.name;
 }
 
+const getBlockedUsers = async (userId: string, roomId: string) => {
+    if (!mongoose.isValidObjectId(roomId)) throw new ApiError(400, "Invalid room id!");
+
+    const ownerObjectId = new mongoose.Types.ObjectId(userId);
+    const roomObjectId = new mongoose.Types.ObjectId(roomId);
+
+    const pipeline: mongoose.PipelineStage[] = [
+        {
+            $match: {
+                _id: roomObjectId,
+                room_creator: ownerObjectId
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "blocked_users",
+                foreignField: "_id",
+                as: "blocked_users"
+            }
+        },
+        {
+            $project: {
+                blocked_users: {
+                    _id: 1,
+                    name: 1,
+                    username: 1,
+                    avatar: 1
+                }
+            }
+        }
+    ];
+
+    const result = await Room.aggregate(pipeline);
+
+    if (!result.length) throw new ApiError(401, "Unauthorized action!");
+
+    return result;
+}
+
 const getInvitations = async (userId: string, roomId: string) => {
     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(roomId)) {
         throw new ApiError(400, "Invalid user id or room id!");
@@ -475,4 +515,4 @@ const leaveRoom = async (userId: string, room_id: string) => {
     return { roomName: room.room_name };
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation,leaveRoom };
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, getInvitations, revokeInvitation, leaveRoom };

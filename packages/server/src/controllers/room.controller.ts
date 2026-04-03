@@ -128,6 +128,19 @@ const blockUser = asyncHandler(
     }
 )
 
+const getBlockedUsers = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+
+        const result = await roomService.getBlockedUsers(req.user as string, req.params.roomId as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Blocked users fetched successfully!"))
+    }
+)
+
 const getInvitations = asyncHandler(
     async (req: Request, res: Response) => {
 
@@ -168,4 +181,4 @@ const leaveRoom = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getInvitations, revokeInvitation, leaveRoom };
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, getInvitations, revokeInvitation, leaveRoom };

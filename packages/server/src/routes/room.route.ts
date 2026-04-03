@@ -15,6 +15,7 @@ router.route('/accept-invite/:roomId/:token').post(checkAuth, roomController.acc
 router.route('/reject-invite/:roomId/:token').delete(checkAuth, roomController.rejectInvite);
 router.route('/remove-user/:roomId/').delete(checkAuth, roomController.removeUser);
 router.route('/block-user/:roomId/').patch(checkAuth, roomController.blockUser);
+router.route('/get-blocked-users/:roomId/').get(checkAuth, roomController.getBlockedUsers);
 router.route('/get-invitations/:roomId/').get(checkAuth, roomController.getInvitations);
 router.route('/revoke-invitation/:roomId/').delete(checkAuth, roomController.revokeInvitation);
 router.route('/leave-room/:roomId/').patch(checkAuth, roomController.leaveRoom);
