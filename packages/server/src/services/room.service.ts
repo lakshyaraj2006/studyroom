@@ -58,12 +58,14 @@ const getRoom = async (roomId: string, userId?: string | undefined) => {
             throw new ApiError(401, "Login required to access this room");
         }
 
-        if (room.blocked_users?.includes(new mongoose.Types.ObjectId(userId))) {
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const isBlocked = room.blocked_users?.some(id => id.equals(userObjectId));
+        if (isBlocked) {
             throw new ApiError(403, "You are blocked from this room!");
         }
 
         const isMember = room.room_users.some(
-            (id) => id.toString() === userId
+            (id) => id.equals(userObjectId)
         );
 
         if (!isMember) {
@@ -135,14 +137,26 @@ const deleteRoom = async (userId: string, roomId: string) => {
         throw new ApiError(401, "You cannot modify this room")
     }
 
-    await Promise.all([
-        User.updateMany(
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await User.updateMany(
             { joined_rooms: room._id },
-            { $pull: { joined_rooms: room._id } }
-        ),
-        deleteCloudinaryFolder('StudyRoom/rooms/' + roomId),
-        Room.findByIdAndDelete(roomId)
-    ]);
+            { $pull: { joined_rooms: room._id } },
+            { session }
+        );
+        await Room.findByIdAndDelete(roomId, { session });
+
+        await session.commitTransaction();
+
+        await deleteCloudinaryFolder('StudyRoom/rooms/' + roomId);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 
     return true;
 };
@@ -153,17 +167,19 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
         throw new ApiError(404, "Room not found!");
     }
 
-    const user = await User.findOne({ email: toEmail });
+    const user = await User.findOne({ email: toEmail }).select("_id name username email");
 
     if (!user) {
         throw new ApiError(404, "User not found!");
     }
 
-    if (room.blocked_users?.includes(new mongoose.Types.ObjectId(user._id))) {
+    const isBlocked = room.blocked_users?.some(id => id.equals(user._id));
+    if (isBlocked) {
         throw new ApiError(403, "The user has been blocked from room!");
     }
 
-    if (room.room_users.includes(new mongoose.Types.ObjectId(user._id))) {
+    const alreadyMember = room.room_users.some(id => id.equals(user._id));
+    if (alreadyMember) {
         throw new ApiError(400, "User has already joined the room!");
     }
 
@@ -176,17 +192,37 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
 
     // TODO: Generate url based on frotend host
     const generatedAcceptUrl = baseUrl + '/api/v1/rooms/accept-invite/' + room._id.toString() + '/' + invite_token;
-    const generatedRejecetUrl = baseUrl + '/api/v1/rooms/reject-invite/' + room._id.toString() + '/' + invite_token;
+    const generatedRejectUrl = baseUrl + '/api/v1/rooms/reject-invite/' + room._id.toString() + '/' + invite_token;
 
-    await Promise.all([
-        RoomInvite.create({
-            room_invite_token: invite_token,
-            room_invite_token_expiry: invite_token_expiry,
-            room_id: room._id,
-            sent_to_user: user._id
-        }),
-        sendRoomInviteEmail(user.username, toEmail, room.room_name, generatedAcceptUrl, generatedRejecetUrl)
-    ]);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await RoomInvite.create(
+            [
+                {
+                    room_invite_token: invite_token,
+                    room_invite_token_expiry: invite_token_expiry,
+                    room_id: room._id,
+                    sent_to_user: user._id
+                }
+            ],
+            { session }
+        );
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
+
+    try {
+        await sendRoomInviteEmail(user.username, toEmail, room.room_name, generatedAcceptUrl, generatedRejectUrl);
+    } catch (err) {
+        throw err;
+    }
 
     return user.name;
 }
@@ -216,20 +252,31 @@ const acceptInvite = async (userId: string, roomId: string, token: string) => {
         throw new ApiError(401, "Unauthorized access to invitation!");
     }
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await Promise.all([
-        roomInvitation.deleteOne(),
-        room.updateOne({
+    try {
+        await roomInvitation.deleteOne({ session });
+
+        await room.updateOne({
             $addToSet: {
                 room_users: userId
             }
-        }),
-        user.updateOne({
+        }, { session });
+
+        await user.updateOne({
             $addToSet: {
                 joined_rooms: room._id
             }
-        })
-    ]);
+        }, { session })
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 
     return room.room_name;
 }
@@ -259,10 +306,19 @@ const rejectInvite = async (userId: string, roomId: string, token: string) => {
         throw new ApiError(401, "Unauthorized access to invitation!");
     }
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await Promise.all([
-        roomInvitation.deleteOne()
-    ]);
+    try {
+        await roomInvitation.deleteOne({ session });
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 
     return room.room_name;
 }
@@ -283,22 +339,36 @@ const removeUser = async (userId: string, userToRemoveId: string, roomId: string
         throw new ApiError(404, "User not found!");
     }
 
-    if (!room.room_users.includes(new mongoose.Types.ObjectId(userToRemoveId))) {
+    const userToRemoveObjectId = new mongoose.Types.ObjectId(userToRemoveId);
+    const isMember = room.room_users.some(id => id.equals(userToRemoveObjectId));
+
+    if (!isMember) {
         throw new ApiError(400, userToRemove.name + " has not joined the room!");
     }
 
-    await Promise.all([
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
         await room.updateOne({
             $pull: {
                 room_users: userToRemoveId
             }
-        }),
+        }, { session });
+
         await userToRemove.updateOne({
             $pull: {
                 joined_rooms: roomId
             }
-        })
-    ])
+        }, { session });
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 
     return userToRemove.name;
 }
@@ -316,33 +386,44 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
     const userToBlock = await User.findById(userToBlockId);
     if (!userToBlock) throw new ApiError(404, "User not found!");
 
-    if (room.blocked_users?.includes(userToBlock._id)) {
+    const alreadyBlocked = room.blocked_users?.some(id => id.equals(userToBlock._id));
+    if (alreadyBlocked) {
         throw new ApiError(400, "User is already blocked!");
     }
 
-    await Promise.all([
-        room.updateOne({
-            $addToSet: {
-                blocked_users: userToBlock._id
-            },
-            $pull: {
-                room_users: userToBlock._id
-            }
-        }),
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-        userToBlock.updateOne({
-            $pull: {
-                joined_rooms: room._id
-            }
-        }),
+    try {
+        await room.updateOne({
+            $addToSet: { blocked_users: userToBlock._id },
+            $pull: { room_users: userToBlock._id }
+        }, { session });
 
-        sendRoomBlockedEmail(
+        await userToBlock.updateOne({
+            $pull: { joined_rooms: room._id }
+        }, { session });
+
+
+        await session.commitTransaction();
+
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
+
+    try {
+        await sendRoomBlockedEmail(
             userToBlock.username,
             userToBlock.email,
             room.room_name,
             reason
-        )
-    ]);
+        );
+    } catch (err) {
+        throw err;
+    }
 
     return userToBlock.name;
 }
@@ -371,10 +452,16 @@ const getBlockedUsers = async (userId: string, roomId: string) => {
         {
             $project: {
                 blocked_users: {
-                    _id: 1,
-                    name: 1,
-                    username: 1,
-                    avatar: 1
+                    $map: {
+                        input: "$blocked_users",
+                        as: "user",
+                        in: {
+                            _id: "$$user._id",
+                            name: "$$user.name",
+                            username: "$$user.username",
+                            avatar: "$$user.avatar"
+                        }
+                    }
                 }
             }
         }
@@ -400,33 +487,43 @@ const unblockUser = async (userId: string, blockedUserId: string, roomId: string
 
     if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
 
-    const userToBlock = await User.findById(blockedUserId);
-    if (!userToBlock) throw new ApiError(404, "User not found!");
+    const userToUnblock = await User.findById(blockedUserId);
+    if (!userToUnblock) throw new ApiError(404, "User not found!");
 
-    const isBlocked = room.blocked_users?.some(id => id.equals(userToBlock._id));
+    const isBlocked = room.blocked_users?.some(id => id.equals(userToUnblock._id));
 
     if (!isBlocked) {
         throw new ApiError(400, "User not blocked!");
     }
 
-    await Promise.all([
-        room.updateOne({
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await room.updateOne({
             $addToSet: {
-                room_users: userToBlock._id
+                room_users: userToUnblock._id
             },
             $pull: {
-                blocked_users: userToBlock._id
+                blocked_users: userToUnblock._id
             }
-        }),
+        }, { session });
 
-        userToBlock.updateOne({
+        await userToUnblock.updateOne({
             $addToSet: {
                 joined_rooms: room._id
             }
-        }),
-    ]);
+        }, { session });
 
-    return userToBlock.name;
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
+
+    return userToUnblock.name;
 }
 
 const getInvitations = async (userId: string, roomId: string) => {
@@ -538,21 +635,35 @@ const leaveRoom = async (userId: string, room_id: string) => {
     if (!room) throw new ApiError(404, "Room not found!");
     if (!user) throw new ApiError(404, "User not found!");
 
-    if (!room?.room_users.includes(new mongoose.Types.ObjectId(userId))) throw new ApiError(400, "You are not a member of this room!");
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isMember = room.room_users.some(id => id.equals(userObjectId));
 
-    await Promise.all([
-        room.updateOne({
+    if (!isMember) {
+        throw new ApiError(400, "You are not a member of this room!");
+    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await room.updateOne({
             $pull: {
                 room_users: userId
             }
-        }),
+        }, { session });
 
-        user.updateOne({
+        await user.updateOne({
             $pull: {
                 joined_rooms: room_id
             }
-        }),
-    ])
+        }, { session })
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 
     return { roomName: room.room_name };
 }
