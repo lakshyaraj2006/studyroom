@@ -387,6 +387,48 @@ const getBlockedUsers = async (userId: string, roomId: string) => {
     return result;
 }
 
+const unblockUser = async (userId: string, blockedUserId: string, roomId: string) => {
+    if (!mongoose.isValidObjectId(blockedUserId) ||
+        !mongoose.isValidObjectId(roomId)
+    ) {
+        throw new ApiError(400, "Invalid blocked user id or room id!")
+    }
+
+    const room = await Room.findById(roomId);
+
+    if (!room) throw new ApiError(404, "Room not found!");
+
+    if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
+
+    const userToBlock = await User.findById(blockedUserId);
+    if (!userToBlock) throw new ApiError(404, "User not found!");
+
+    const isBlocked = room.blocked_users?.some(id => id.equals(userToBlock._id));
+
+    if (!isBlocked) {
+        throw new ApiError(400, "User not blocked!");
+    }
+
+    await Promise.all([
+        room.updateOne({
+            $addToSet: {
+                room_users: userToBlock._id
+            },
+            $pull: {
+                blocked_users: userToBlock._id
+            }
+        }),
+
+        userToBlock.updateOne({
+            $addToSet: {
+                joined_rooms: room._id
+            }
+        }),
+    ]);
+
+    return userToBlock.name;
+}
+
 const getInvitations = async (userId: string, roomId: string) => {
     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(roomId)) {
         throw new ApiError(400, "Invalid user id or room id!");
@@ -515,4 +557,4 @@ const leaveRoom = async (userId: string, room_id: string) => {
     return { roomName: room.room_name };
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, getInvitations, revokeInvitation, leaveRoom };
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, leaveRoom };
