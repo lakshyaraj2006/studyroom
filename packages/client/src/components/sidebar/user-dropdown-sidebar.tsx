@@ -17,6 +17,8 @@ export function SidebarUserDropdown() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
 
+  if (!usrInfo) return null;
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>

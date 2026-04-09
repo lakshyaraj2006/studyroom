@@ -41,31 +41,106 @@ const createRoom = async (userId: string, roomData: {
 };
 
 const getRooms = async () => {
-    const rooms = await Room.find({ access_type: AccessType.PUBLIC }).lean();
+    const pipeline: mongoose.PipelineStage[] = [
+        {
+            $match: { access_type: AccessType.PUBLIC }
+        },
 
-    return rooms;
-}
+        {
+            $lookup: {
+                from: "users",
+                localField: "room_creator",
+                foreignField: "_id",
+                as: "room_creator",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            username: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$room_creator",
+                preserveNullAndEmptyArrays: true
+            }
+        },
 
-const getRoom = async (roomId: string, userId?: string | undefined) => {
-    const room = await Room.findById(roomId).lean();
+        {
+            $project: {
+                blocked_users: 0
+            }
+        }
+    ];
+
+    return await Room.aggregate(pipeline);
+};
+
+const getRoom = async (roomId: string, userId?: string) => {
+    const roomObjectId = new mongoose.Types.ObjectId(roomId);
+
+    const pipeline: mongoose.PipelineStage[] = [
+        {
+            $match: { _id: roomObjectId }
+        },
+
+        {
+            $lookup: {
+                from: "users",
+                localField: "room_creator",
+                foreignField: "_id",
+                as: "room_creator",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            username: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: {
+                path: "$room_creator",
+                preserveNullAndEmptyArrays: true
+            }
+        }
+    ];
+
+    const result = await Room.aggregate(pipeline);
+    const room = result[0];
 
     if (!room) {
         throw new ApiError(404, "Room not found");
     }
+
+    const userObjectId = userId
+        ? new mongoose.Types.ObjectId(userId)
+        : null;
 
     if (room.access_type === AccessType.PRIVATE) {
         if (!userId) {
             throw new ApiError(401, "Login required to access this room");
         }
 
-        const userObjectId = new mongoose.Types.ObjectId(userId);
-        const isBlocked = room.blocked_users?.some(id => id.equals(userObjectId));
+        const isBlocked = room.blocked_users?.some((id: any) =>
+            id.equals(userObjectId)
+        );
+
         if (isBlocked) {
             throw new ApiError(403, "You are blocked from this room!");
         }
 
-        const isMember = room.room_users.some(
-            (id) => id.equals(userObjectId)
+        const isMember = room.room_users.some((id: any) =>
+            id.equals(userObjectId)
         );
 
         if (!isMember) {
@@ -73,8 +148,10 @@ const getRoom = async (roomId: string, userId?: string | undefined) => {
         }
     }
 
+    delete room.blocked_users;
+
     return room;
-}
+};
 
 const updateRoom = async (userId: string, roomId: string, roomData: {
     name?: string,

@@ -19,6 +19,8 @@ export function UserDropdown() {
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
 
+    if (!usrInfo) return null;
+
     const handleLogout = async () => {
         try {
             await logout();

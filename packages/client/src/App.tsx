@@ -6,6 +6,7 @@ import { baseRoutes } from './routes/base.routes';
 import { profileRoutes } from './routes/profile.routes';
 import NotFoundPage from './pages/error/NotFound';
 import { AuthProvider } from './context/AuthProvider';
+import { roomRoutes } from './routes/rooms.routes';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,11 @@ const router = createBrowserRouter([
     path: '/profile',
     element: <RootLayout />,
     children: profileRoutes
+  },
+  {
+    path: '/rooms',
+    element: <RootLayout />,
+    children: roomRoutes
   },
   {
     path: "*",
