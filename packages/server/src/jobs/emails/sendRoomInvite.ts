@@ -1,5 +1,5 @@
-import { transporter } from "../nodemailer.config";
-import { renderMjml } from "../../mail/renderMjml";
+import { transporter } from "@/core/config/mail";
+import { renderMjml } from "@/core/mail/renderMjml";
 
 export const sendRoomInviteEmail = async (
   username: string,

@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { User } from "../models/user.model";
-import { ApiError } from "../utils/ApiError";
+import { User } from "./user.model";
+import { ApiError } from "@/core/errors/ApiError";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
-import { RefreshTokenPayloadType } from "../types/jwtPayloadCustom";
-import { generateVerificationCode } from "../lib/generateVerificationCode";
-import { sendForgotPasswordEmail } from "../lib/emails/sendForgotPasswordEmail";
-import { sendVerificationEmail } from "../lib/emails/sendVerificationEmail";
+import { RefreshTokenPayloadType } from "@/shared/types/jwtPayloadCustom";
+import { generateVerificationCode } from "@/shared/lib/generateVerificationCode";
+import { sendForgotPasswordEmail } from "@/jobs/emails/sendForgotPasswordEmail";
+import { sendVerificationEmail } from "@/jobs/emails/sendVerificationEmail";
 
 const createUser = async (name: string, username: string, email: string, password: string, cpassword: string) => {
     // check for empty fields

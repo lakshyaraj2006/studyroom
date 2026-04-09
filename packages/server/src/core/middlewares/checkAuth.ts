@@ -1,13 +1,13 @@
 import jwt from "jsonwebtoken";
-import { AccessTokenPayloadType } from "../types/jwtPayloadCustom";
+import { AccessTokenPayloadType } from "@/shared/types/jwtPayloadCustom";
 import { NextFunction, Request, Response } from "express";
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../errors/ApiError";
 
-export const checkAuthOptional = (req: Request, res: Response, next: NextFunction) => {
+export const checkAuth = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return next();
+    return next(new ApiError(401, "Unauthorized"));
   }
 
   const [scheme, token] = authHeader.split(" ");
@@ -25,7 +25,7 @@ export const checkAuthOptional = (req: Request, res: Response, next: NextFunctio
     req.user = decoded.id;
     next();
   } catch (err) {
-    return next();
+    return next(new ApiError(401, "Invalid or expired token"));
   }
 };
 

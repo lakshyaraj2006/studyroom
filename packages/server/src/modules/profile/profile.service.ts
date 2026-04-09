@@ -1,11 +1,10 @@
-import mongoose, { Schema } from "mongoose";
-import { deleteFromCloudinary, deleteCloudinaryFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
-import { getCloudinaryPublicId } from "../lib/getCloudinaryPublicId";
-import { IUser, User } from "../models/user.model";
-import { ApiError } from "../utils/ApiError";
-import { sendDeleteAccountEmail } from "../lib/emails/sendDeleteAccountEmailCode";
-import { generateVerificationCode } from "../lib/generateVerificationCode";
-import { sendVerificationEmail } from "../lib/emails/sendVerificationEmail";
+import { deleteFromCloudinary, deleteCloudinaryFolder, uploadOnCloudinary } from "@/core/config/cloudinary";
+import { getCloudinaryPublicId } from "@/shared/lib/getCloudinaryPublicId";
+import { IUser, User } from "@/modules/user/user.model";
+import { ApiError } from "@/core/errors/ApiError";
+import { sendDeleteAccountEmail } from "@/jobs/emails/sendDeleteAccountEmailCode";
+import { generateVerificationCode } from "@/shared/lib/generateVerificationCode";
+import { sendVerificationEmail } from "@/jobs/emails/sendVerificationEmail";
 
 const getUserProfile = async (userHandle: string) => {
     if (!userHandle || userHandle === "") {

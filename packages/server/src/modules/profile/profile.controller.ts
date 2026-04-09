@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { profileService } from "../services/profile.service";
-import { ApiResponse } from "../utils/ApiResponse";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/AsyncHandler";
+import { profileService } from "./profile.service";
+import { ApiResponse } from "@/shared/utils/ApiResponse";
+import { ApiError } from "@/core/errors/ApiError";
+import { asyncHandler } from "@/shared/utils/AsyncHandler";
 
 const getUserProfile = asyncHandler(
     async (req: Request, res: Response) => {

@@ -1,23 +1,21 @@
-import { transporter } from "../nodemailer.config";
-import { renderMjml } from "../../mail/renderMjml";
+import { transporter } from "@/core/config/mail";
+import { renderMjml } from "@/core/mail/renderMjml";
 
-export const sendRoomBlockedEmail = async (
+export const sendForgotPasswordEmail = async (
   username: string,
   email: string,
-  roomName: string,
-  reason: string
+  code: string
 ): Promise<boolean> => {
   try {
-    const html = renderMjml("room-block-email", {
+    const html = renderMjml("forgot-password", {
       username,
-      roomName,
-      reason
+      code
     })
 
     const info = await transporter.sendMail({
       from: '"StudyRoom" <noreply@studyroom.com>',
       to: email,
-      subject: "You have been blocked from a room",
+      subject: "Code for Reset Password",
       html
     })
 

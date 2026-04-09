@@ -1,12 +1,12 @@
-import { deleteCloudinaryFolder, uploadOnCloudinary } from "../lib/cloudinary.config";
-import { AccessType, Room } from "../models/room.model";
-import { ApiError } from "../utils/ApiError";
-import { User } from "../models/user.model";
+import { deleteCloudinaryFolder, uploadOnCloudinary } from "@/core/config/cloudinary";
+import { AccessType, Room } from "./room.model";
+import { ApiError } from "@/core/errors/ApiError";
+import { User } from "../user/user.model";
 import crypto from "node:crypto";
-import { RoomInvite } from "../models/room-invite.model";
-import { sendRoomInviteEmail } from "../lib/emails/sendRoomInvite";
+import { RoomInvite } from "./room-invite.model";
+import { sendRoomInviteEmail } from "@/jobs/emails/sendRoomInvite";
 import mongoose from "mongoose";
-import { sendRoomBlockedEmail } from "../lib/emails/sendRoomBlockedEmail";
+import { sendRoomBlockedEmail } from "@/jobs/emails/sendRoomBlockedEmail";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
