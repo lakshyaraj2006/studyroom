@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { profileController } from "../controllers/profile.controller";
-import { checkAuth, upload } from "../middlewares";
+import { profileController } from "./profile.controller";
+import { checkAuth, upload } from "@/core/middlewares";
 
 const router = Router();
 

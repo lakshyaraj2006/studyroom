@@ -1,21 +1,19 @@
-import { transporter } from "../nodemailer.config";
-import { renderMjml } from "../../mail/renderMjml";
+import { transporter } from "@/core/config/mail";
+import { renderMjml } from "@/core/mail/renderMjml";
 
-export const sendForgotPasswordEmail = async (
+export const sendDeleteAccountEmail = async (
   username: string,
   email: string,
-  code: string
 ): Promise<boolean> => {
   try {
-    const html = renderMjml("forgot-password", {
-      username,
-      code
+    const html = renderMjml("account-deleted", {
+      username
     })
 
     const info = await transporter.sendMail({
       from: '"StudyRoom" <noreply@studyroom.com>',
       to: email,
-      subject: "Code for Reset Password",
+      subject: "Your account has been deleted",
       html
     })
 

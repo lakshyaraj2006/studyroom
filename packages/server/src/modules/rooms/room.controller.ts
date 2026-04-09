@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/AsyncHandler";
-import { roomService } from "../services/room.service";
-import { ApiResponse } from "../utils/ApiResponse";
-import { ApiError } from "../utils/ApiError";
+import { asyncHandler } from "@/shared/utils/AsyncHandler";
+import { roomService } from "./room.service";
+import { ApiResponse } from "@/shared/utils/ApiResponse";
+import { ApiError } from "@/core/errors/ApiError";
 
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {

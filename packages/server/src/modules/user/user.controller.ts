@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { userService } from "../services/user.service";
-import { asyncHandler } from "../utils/AsyncHandler";
+import { ApiResponse } from "@/shared/utils/ApiResponse";
+import { userService } from "./user.service";
+import { asyncHandler } from "@/shared/utils/AsyncHandler";
 
 const createUser = asyncHandler(
     async (req: Request, res: Response) => {

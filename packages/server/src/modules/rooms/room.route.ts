@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { checkAuth, upload } from "../middlewares";
-import { roomController } from "../controllers/room.controller";
-import { checkAuthOptional } from "../middlewares/checkAuthOptional";
+import { checkAuth, upload } from "@/core/middlewares";
+import { roomController } from "./room.controller";
+import { checkAuthOptional } from "@/core/middlewares/checkAuthOptional";
 
 const router = Router();
 
