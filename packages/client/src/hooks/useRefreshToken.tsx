@@ -7,7 +7,7 @@ const useRefreshToken = () => {
 
   const refresh = async () => {
     const response = await axios.post<
-      ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined }>
+      ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>
     >("/users/rotate", null, {
       withCredentials: true,
     });
@@ -18,7 +18,7 @@ const useRefreshToken = () => {
 
     const accessToken = response.data.data.accessToken;
     setAuthToken(accessToken);
-    setUsrInfo({ id: response.data.data.id, username: response.data.data.username, avatar: response.data.data.avatar });
+    setUsrInfo({ id: response.data.data.id, username: response.data.data.username, avatar: response.data.data.avatar, handle: response.data.data.handle });
 
     return accessToken;
   };

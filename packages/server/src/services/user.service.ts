@@ -153,7 +153,7 @@ const verifyEmail = async (email: string, code: string) => {
                     const refreshToken = user.generateRefreshToken();
 
                     // return the access & refresh tokens
-                    return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar };
+                    return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar, handle: user.handle };
                 }
             }
         }
@@ -190,7 +190,7 @@ const loginUser = async (identifier: string, password: string) => {
                 const refreshToken = user.generateRefreshToken();
 
                 // return the access & refresh tokens
-                return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar };
+                return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar, handle: user.handle };
             } else {
                 throw new ApiError(400, "Invalid password!")
             }
@@ -230,7 +230,7 @@ const rotateAccessAndRefreshTokens = async (cookies: Record<any, any>) => {
                 const refreshToken = user.generateRefreshToken();
 
                 // return the access & refresh tokens
-                return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar };
+                return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar, handle: user.handle };
             } else {
                 // throw 404 not found
                 throw new ApiError(404, "User does not exist!")

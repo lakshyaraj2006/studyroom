@@ -34,7 +34,7 @@ const verifyEmail = asyncHandler(
     async (req: Request, res: Response) => {
         const { email, code } = req.body;
 
-        const { accessToken, refreshToken, id, username, avatar } = await userService.verifyEmail(email, code);
+        const { accessToken, refreshToken, id, username, avatar, handle } = await userService.verifyEmail(email, code);
 
         // set the refresh token as a cookie
         res.cookie('refreshtoken', refreshToken, {
@@ -46,7 +46,7 @@ const verifyEmail = asyncHandler(
         // return the api response
         return res
             .status(200)
-            .json(new ApiResponse(200, { accessToken, id, username, avatar }, "Email verified!"));
+            .json(new ApiResponse(200, { accessToken, id, username, avatar, handle }, "Email verified!"));
     }
 );
 
@@ -54,7 +54,7 @@ const loginUser = asyncHandler(
     async (req: Request, res: Response) => {
         const { identifier, password } = req.body;
 
-        const { accessToken, refreshToken, id, username, avatar } = await userService.loginUser(identifier, password);
+        const { accessToken, refreshToken, id, username, avatar, handle } = await userService.loginUser(identifier, password);
 
         // set the refresh token as a cookie
         res.cookie('refreshtoken', refreshToken, {
@@ -66,7 +66,7 @@ const loginUser = asyncHandler(
         // return the api response
         return res
             .status(200)
-            .json(new ApiResponse(200, { accessToken, id, username, avatar }, "Logged in successfully!"));
+            .json(new ApiResponse(200, { accessToken, id, username, avatar, handle }, "Logged in successfully!"));
     }
 );
 
@@ -80,7 +80,7 @@ const logoutUser = (req: Request, res: Response) => {
 
 const rotateAccessAndRefreshTokens = asyncHandler(
     async (req: Request, res: Response) => {
-        const { accessToken, refreshToken, id } = await userService.rotateAccessAndRefreshTokens(req.cookies);
+        const { accessToken, refreshToken, id, username, avatar, handle } = await userService.rotateAccessAndRefreshTokens(req.cookies);
 
         // set the refresh token as a cookie
         res.cookie('refreshtoken', refreshToken, {
@@ -92,7 +92,7 @@ const rotateAccessAndRefreshTokens = asyncHandler(
         // return the api response
         return res
             .status(200)
-            .json(new ApiResponse(200, { accessToken, id }, "Tokens rotated"));
+            .json(new ApiResponse(200, { accessToken, id, username, avatar, handle }, "Tokens rotated"));
     }
 );
 
