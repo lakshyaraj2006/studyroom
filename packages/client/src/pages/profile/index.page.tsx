@@ -121,7 +121,7 @@ export default function ProfilePage() {
                         </div>}
 
                         {authToken && isOwnProfile && !profile?.is_deleted && (
-                            <div className="flex items-center gap-2 w-full mt-6">
+                            <div className="flex flex-col md:flex-row items-center gap-2 w-full mt-6">
                                 <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
                                     {
                                         isEditing

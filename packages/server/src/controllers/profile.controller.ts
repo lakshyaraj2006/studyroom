@@ -42,7 +42,7 @@ const uploadProfilePic = asyncHandler(
 
         return res
             .status(200)
-            .json(new ApiResponse(200, null, "Profile Picture Uploaded"))
+            .json(new ApiResponse(200, {avatar: result.avatar}, "Profile Picture Uploaded"))
     }
 )
 

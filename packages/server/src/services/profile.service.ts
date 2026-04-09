@@ -59,7 +59,7 @@ const uploadProfilePic = async (userId: string, avatarLocalPath: string) => {
         }
     )
 
-    return true;
+    return {avatar: result.secure_url};
 }
 
 const deleteProfilePic = async (userId: string) => {
