@@ -703,6 +703,59 @@ const revokeInvitation = async (
 
 };
 
+const joinRoom = async (userId: string, room_id: string) => {
+    if (!mongoose.isValidObjectId(room_id)) throw new ApiError(400, "Invalid room object id!");
+
+    const room = await Room.findById(room_id);
+    const user = await User.findById(userId);
+
+    if (!room) throw new ApiError(404, "Room not found!");
+    if (!user) throw new ApiError(404, "User not found!");
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isMember = room.room_users.some(id => id.equals(userObjectId));
+
+    if (room.access_type === AccessType.PRIVATE) {
+        if (room.access_type === AccessType.PRIVATE) {
+            throw new ApiError(
+                isMember ? 400 : 401,
+                isMember
+                    ? "You are already a member of this room!"
+                    : "You are not authorized to access this room!"
+            );
+        }
+    }
+
+    if (isMember) {
+        throw new ApiError(400, "You are already a member of this room!");
+    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await room.updateOne({
+            $addToSet: {
+                room_users: userId
+            }
+        }, { session });
+
+        await user.updateOne({
+            $addToSet: {
+                joined_rooms: room_id
+            }
+        }, { session })
+
+        await session.commitTransaction();
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
+
+    return { roomName: room.room_name };
+}
+
 const leaveRoom = async (userId: string, room_id: string) => {
     if (!mongoose.isValidObjectId(room_id)) throw new ApiError(400, "Invalid room object id!");
 
@@ -745,4 +798,4 @@ const leaveRoom = async (userId: string, room_id: string) => {
     return { roomName: room.room_name };
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, leaveRoom };
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, joinRoom, leaveRoom };

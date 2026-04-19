@@ -182,6 +182,19 @@ const revokeInvitation = asyncHandler(
     }
 )
 
+const joinRoom = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+
+        const { roomName } = await roomService.joinRoom(req.user as string, req.params.roomId as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, `You joined ${roomName} room!`))
+    }
+)
+
 const leaveRoom = asyncHandler(
     async (req: Request, res: Response) => {
 
@@ -195,4 +208,4 @@ const leaveRoom = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, leaveRoom };
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, joinRoom, leaveRoom };

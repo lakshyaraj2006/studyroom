@@ -19,6 +19,7 @@ router.route('/get-blocked-users/:roomId/').get(checkAuth, roomController.getBlo
 router.route('/unblock-user/:roomId/').patch(checkAuth, roomController.unblockUser);
 router.route('/get-invitations/:roomId/').get(checkAuth, roomController.getInvitations);
 router.route('/revoke-invitation/:roomId/').delete(checkAuth, roomController.revokeInvitation);
+router.route('/join-room/:roomId/').patch(checkAuth, roomController.joinRoom);
 router.route('/leave-room/:roomId/').patch(checkAuth, roomController.leaveRoom);
 
 export { router as roomRouter };
