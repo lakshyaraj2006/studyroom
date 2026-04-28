@@ -10,7 +10,7 @@ const createRoom = asyncHandler(
         const { name, topics, tagline } = req.body;
 
         const parsedTopics = JSON.parse(topics);
-        const roomData = { name, topics: parsedTopics, tagline, imageLocalPath };
+        const roomData = { name, topics: parsedTopics, tagline, imageLocalPath, access_type: req.body.access_type };
 
         const result = await roomService.createRoom(req.user as string, roomData);
 

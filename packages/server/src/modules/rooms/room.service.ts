@@ -12,7 +12,8 @@ const createRoom = async (userId: string, roomData: {
     name: string,
     topics: string[],
     tagline: string,
-    imageLocalPath?: string
+    imageLocalPath?: string,
+    access_type?: AccessType.PUBLIC | AccessType.PRIVATE
 }) => {
     let uploadedFileUrl: string | undefined;
 
@@ -21,7 +22,8 @@ const createRoom = async (userId: string, roomData: {
         room_name: roomData.name,
         room_topics: roomData.topics,
         room_tagline: roomData.tagline,
-        room_creator: userId
+        room_creator: userId,
+        access_type: roomData.access_type
     })
 
     if (roomData.imageLocalPath) {

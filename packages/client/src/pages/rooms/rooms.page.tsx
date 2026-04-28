@@ -3,8 +3,13 @@ import { type Room } from "@/interfaces/room";
 import type { ServerResponse } from "@/interfaces/server-response";
 import axiosInstance from "@/lib/api";
 import RoomCard from "@/components/rooms/room-card.component";
+import { useAuth } from "@/hooks/useAuth";
+import { buttonVariants } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const Rooms = () => {
+  const { authToken } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +37,12 @@ const Rooms = () => {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-6">
+    <div className="container max-w-6xl mx-auto py-6 space-y-6">
+      {authToken && <div className="flex items-cend justify-end">
+        <Link to="/rooms/add" className={cn(buttonVariants())}>
+          Create Room
+        </Link>
+      </div>}
       {rooms.length === 0 ? (
         <p className="text-sm text-muted-foreground">No rooms found</p>
       ) : (

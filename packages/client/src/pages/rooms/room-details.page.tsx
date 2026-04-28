@@ -1,173 +1,208 @@
-import { type Room } from "@/interfaces/room";
-import { type ServerResponse } from "@/interfaces/server-response";
-import axiosInstance from "@/lib/api";
-import { useEffect, useState } from "react";
-import { redirect, useParams } from "react-router-dom";
+import { type Room } from "@/interfaces/room"
+import { type ServerResponse } from "@/interfaces/server-response"
+import axiosInstance from "@/lib/api"
+import { useEffect, useState } from "react"
+import { useParams, Navigate } from "react-router-dom"
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/useAuth";
-import Discussions from "@/components/rooms/discussions.component";
-import { Button } from "@/components/ui/button";
-import { AxiosError } from "axios";
-import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/hooks/useAuth"
+import Discussions from "@/components/rooms/discussions.component"
+import { Button } from "@/components/ui/button"
+import { AxiosError } from "axios"
+import { toast } from "sonner"
 
-type LoadingState = "idle" | "fetchingRoom" | "checkingMember" | "leavingRoom";
+type LoadingState =
+    | "idle"
+    | "fetchingRoom"
+    | "checkingMember"
+    | "leavingRoom"
 
 export default function RoomDetails() {
-    const { roomId } = useParams();
-    const { authToken, usrInfo } = useAuth();
+    const { roomId } = useParams()
+    const { authToken, usrInfo } = useAuth()
 
-    const [roomDetails, setRoomDetails] = useState<Room | null>(null);
-    const [loading, setLoading] = useState<LoadingState>("idle");
-    const [isMember, setIsMember] = useState(false);
+    const [roomDetails, setRoomDetails] = useState<Room | null>(null)
+    const [loading, setLoading] = useState<LoadingState>("idle")
+    const [isMember, setIsMember] = useState(false)
 
     useEffect(() => {
         if (roomId) {
-            fetchRoomDetails();
-            checkMember();
+            fetchRoomDetails()
+            checkMember()
         }
-    }, [roomId]);
+    }, [roomId])
 
     const fetchRoomDetails = async () => {
-        setLoading("fetchingRoom");
+        setLoading("fetchingRoom")
         try {
-            const response = await axiosInstance.get<ServerResponse<Room>>(`/rooms/${roomId}`);
-            setRoomDetails(response.data.data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading("idle");
-        }
-    };
-
-    const checkMember = async () => {
-        if (!authToken) return;
-
-        setLoading("checkingMember");
-        try {
-            const response = await axiosInstance.get<ServerResponse<{ isMember: boolean }>>(
-                `/rooms/check-member/${roomId}`,
+            const res = await axiosInstance.get<ServerResponse<Room>>(
+                `/rooms/${roomId}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${authToken}`,
-                    },
+                        "Authorization": `${authToken}`
+                    }
                 }
-            );
-
-            setIsMember(response.data.data.isMember);
-        } catch (error) {
-            console.error(error);
+            )
+            setRoomDetails(res.data.data)
+        } catch (err) {
+            console.error(err)
         } finally {
-            setLoading("idle");
+            setLoading("idle")
         }
-    };
+    }
+
+    const checkMember = async () => {
+        if (!authToken) return
+
+        setLoading("checkingMember")
+        try {
+            const res = await axiosInstance.get<
+                ServerResponse<{ isMember: boolean }>
+            >(`/rooms/check-member/${roomId}`, {
+                headers: { Authorization: `Bearer ${authToken}` },
+            })
+
+            setIsMember(res.data.data.isMember)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading("idle")
+        }
+    }
 
     const handleLeaveRoom = async () => {
-        if (!authToken) return;
+        if (!authToken) return
 
-        setLoading("leavingRoom");
+        setLoading("leavingRoom")
 
         try {
-            const response = await axiosInstance.patch<ServerResponse<null>>(
+            const res = await axiosInstance.patch<ServerResponse<null>>(
                 `/rooms/leave-room/${roomId}`,
                 null,
                 {
-                    headers: {
-                        Authorization: `Bearer ${authToken}`,
-                    },
+                    headers: { Authorization: `Bearer ${authToken}` },
                 }
-            );
+            )
 
-            const { success, message } = response.data;
+            const { success, message } = res.data
+            success ? toast.success(message) : toast.error(message)
 
-            success ? toast.success(message) : toast.error(message);
-            setIsMember(false);
+            setIsMember(false)
         } catch (error) {
-            setIsMember(true);
+            setIsMember(true)
+
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message || "Failed to leave room");
+                toast.error(error.response?.data?.message)
             } else {
-                toast.error("Failed to leave room");
+                toast.error("Failed to leave room")
             }
         } finally {
-            setLoading("idle");
+            setLoading("idle")
         }
-    };
+    }
 
     if (loading === "fetchingRoom" || loading === "checkingMember") {
         return (
-            <div className="container px-6 mx-auto my-10">
+            <div className="max-w-6xl mx-auto px-4 py-10">
                 <p className="text-sm text-muted-foreground">Loading room...</p>
             </div>
-        );
+        )
     }
 
     if (!roomDetails) {
         return (
-            <div className="container px-6 mx-auto my-10">
+            <div className="max-w-6xl mx-auto px-4 py-10">
                 <p className="text-sm text-muted-foreground">Room not found</p>
             </div>
-        );
+        )
     }
 
-    if (!isMember && roomDetails.access_type === "private") redirect("/rooms");
+    if (!isMember && roomDetails.access_type === "private") {
+        return <Navigate to="/rooms" replace />
+    }
 
     return (
-        <div className="container px-4 md:px-6 mx-auto my-6">
-            {authToken && isMember && usrInfo && roomDetails.room_creator._id !== usrInfo?.id && (
-                <div className="flex items-end justify-end mb-4">
-                    <Button
-                        variant="destructive"
-                        onClick={handleLeaveRoom}
-                        disabled={loading === "leavingRoom"}
-                    >
-                        {loading === "leavingRoom" ? "Leaving..." : "Leave Room"}
-                    </Button>
-                </div>
-            )}
+        <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+            <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1">
-                    <Card className="rounded-2xl shadow-sm md:sticky md:top-6">
-                        <CardHeader className="space-y-2">
-                            <CardTitle className="text-xl md:text-2xl font-semibold">
+                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border">
+                    <img
+                        src={roomDetails.room_image || "/images/room-default.jpg"}
+                        className="h-40 sm:h-52 md:h-64 w-full object-cover"
+                    />
+
+                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+
+                    <div className="absolute inset-0 flex items-end">
+                        <div className="w-full p-4 sm:p-6 text-white space-y-1 sm:space-y-2">
+
+                            <h1 className="text-lg sm:text-2xl md:text-3xl font-semibold leading-tight wrap-break-word">
                                 {roomDetails.room_name}
-                            </CardTitle>
+                            </h1>
 
-                            <CardDescription>
-                                Created by {roomDetails.room_creator.name}
-                            </CardDescription>
-
-                            <p className="text-xs text-muted-foreground">
-                                {roomDetails.room_users.length} members
+                            <p className="text-xs sm:text-sm opacity-90 line-clamp-2 wrap-break-word">
+                                {roomDetails.room_tagline}
                             </p>
-                        </CardHeader>
 
-                        <CardContent className="space-y-4">
-                            {roomDetails.room_tagline && (
-                                <p className="text-sm text-muted-foreground">
-                                    {roomDetails.room_tagline}
-                                </p>
-                            )}
-
-                            <div className="flex flex-wrap gap-2">
-                                {roomDetails.room_topics.map((topic, index) => (
-                                    <Badge key={index} variant="secondary">
-                                        {topic}
-                                    </Badge>
-                                ))}
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] sm:text-xs opacity-80">
+                                <span className="truncate max-w-full">
+                                    By {roomDetails.room_creator.name}
+                                </span>
+                                <span>
+                                    {roomDetails.room_users.length} members
+                                </span>
                             </div>
-                        </CardContent>
-                    </Card>
+
+                        </div>
+                    </div>
                 </div>
 
-                <Discussions
-                    roomDetails={roomDetails}
-                    isMember={isMember}
-                    setIsMember={setIsMember}
-                />
+                {authToken &&
+                    isMember &&
+                    usrInfo &&
+                    roomDetails.room_creator._id !== usrInfo.id && (
+                        <div className="flex justify-end">
+                            <Button
+                                variant="destructive"
+                                onClick={handleLeaveRoom}
+                                disabled={loading === "leavingRoom"}
+                            >
+                                {loading === "leavingRoom"
+                                    ? "Leaving..."
+                                    : "Leave Room"}
+                            </Button>
+                        </div>
+                    )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Topics</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-wrap gap-2">
+                                    {roomDetails.room_topics.map((topic, i) => (
+                                        <Badge key={i} variant="secondary">
+                                            {topic}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <Discussions
+                            roomDetails={roomDetails}
+                            isMember={isMember}
+                            setIsMember={setIsMember}
+                        />
+                    </div>
+
+                </div>
             </div>
         </div>
-    );
+    )
 }

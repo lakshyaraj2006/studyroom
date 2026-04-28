@@ -26,14 +26,13 @@ export default function RoomCard({
 
     return (
         <Card className="overflow-hidden flex flex-col justify-between">
-            {room_image && (
+            <div className="relative -mx-6 -mt-6 mb-4 overflow-hidden rounded-t-xl">
                 <img
-                    src={room_image}
+                    src={room_image || "/images/room-default.jpg"}
                     alt={room_name}
-                    className="h-40 w-full object-cover"
+                    className="h-40 w-full object-cover object-top"
                 />
-            )}
-
+            </div>
             <CardHeader>
                 <CardTitle>{room_name}</CardTitle>
                 <CardDescription className="line-clamp-2">
