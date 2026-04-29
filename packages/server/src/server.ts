@@ -8,6 +8,9 @@ import { profileRouter } from "@/modules/profile/profile.route";
 import { errorHandler } from "@/core/middlewares";
 import { roomRouter } from "@/modules/rooms/room.route";
 
+import dns from "node:dns/promises";
+dns.setServers(['1.1.1.1', '8.8.8.8']);
+
 connectDB()
 .then(() => {
     const app = express();
