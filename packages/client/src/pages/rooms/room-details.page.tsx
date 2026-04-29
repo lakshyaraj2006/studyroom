@@ -1,7 +1,7 @@
 import { type Room } from "@/interfaces/room"
 import { type ServerResponse } from "@/interfaces/server-response"
 import axiosInstance from "@/lib/api"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams, Navigate } from "react-router-dom"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,33 +26,7 @@ export default function RoomDetails() {
     const [loading, setLoading] = useState<LoadingState>("idle")
     const [isMember, setIsMember] = useState(false)
 
-    useEffect(() => {
-        if (roomId) {
-            fetchRoomDetails()
-            checkMember()
-        }
-    }, [roomId])
-
-    const fetchRoomDetails = async () => {
-        setLoading("fetchingRoom")
-        try {
-            const res = await axiosInstance.get<ServerResponse<Room>>(
-                `/rooms/${roomId}`,
-                {
-                    headers: {
-                        "Authorization": `${authToken}`
-                    }
-                }
-            )
-            setRoomDetails(res.data.data)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setLoading("idle")
-        }
-    }
-
-    const checkMember = async () => {
+    const checkMember = useCallback(async () => {
         if (!authToken) return
 
         setLoading("checkingMember")
@@ -69,7 +43,33 @@ export default function RoomDetails() {
         } finally {
             setLoading("idle")
         }
-    }
+    }, [roomId, authToken])
+
+    const fetchRoomDetails = useCallback(async () => {
+        setLoading("fetchingRoom")
+        try {
+            const headers = authToken ? { "Authorization": `Bearer ${authToken}` } : {}
+            
+            const res = await axiosInstance.get<ServerResponse<Room>>(
+                `/rooms/${roomId}`,
+                { headers }
+            )
+            setRoomDetails(res.data.data);
+            
+            // Fixed: Added 'await' so finally() doesn't fire prematurely
+            await checkMember();
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading("idle")
+        }
+    }, [roomId, authToken, checkMember])
+
+    useEffect(() => {
+        if (roomId) {
+            fetchRoomDetails()
+        }
+    }, [fetchRoomDetails, roomId, authToken])
 
     const handleLeaveRoom = async () => {
         if (!authToken) return

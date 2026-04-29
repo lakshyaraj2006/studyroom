@@ -141,13 +141,17 @@ const getRoom = async (roomId: string, userId?: string) => {
             throw new ApiError(403, "You are blocked from this room!");
         }
 
+        const isOwner = room.room_creator._id.toString() === userId;
+
         const isMember = room.room_users.some((id: any) =>
             id.equals(userObjectId)
         );
 
-        if (!isMember) {
+        if (!isOwner && !isMember) {
             throw new ApiError(401, "Access denied to private room!");
         }
+
+        return room;
     }
 
     delete room.blocked_users;
