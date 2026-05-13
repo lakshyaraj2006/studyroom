@@ -17,11 +17,22 @@ import { AxiosError } from "axios"
 import { toast } from "sonner"
 import axiosInstance from "@/lib/api"
 import { type ServerResponse } from "@/interfaces/server-response"
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar"
-import { Loader2Icon, UserPlus2Icon } from "lucide-react"
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "../ui/avatar"
+import {
+    Loader2Icon,
+    UserPlus2Icon,
+} from "lucide-react"
+import RoomInvitationsComponent from "./invitations.component"
 
-type User = Pick<Profile, "_id" | "name" | "email" | "avatar">
-type LoadingState = "search" | "invite" | null
+type User = Pick<
+    Profile,
+    "_id" | "name" | "email" | "avatar"
+>
+
 type InviteModalProps = {
     roomId: string
     authToken: string
@@ -35,8 +46,9 @@ export default function InviteModal({
 }: InviteModalProps) {
     const [queryString, setQueryString] = useState("")
     const [users, setUsers] = useState<User[]>([])
-    const [loading, setLoading] = useState<LoadingState>(null)
+    const [isSearching, setIsSearching] = useState(false)
     const [invitingEmail, setInvitingEmail] = useState<string | null>(null)
+    const [refreshInvitations,setRefreshInvitations,] = useState(0)
 
     const debouncedQuery = useDebounce(queryString)
 
@@ -49,7 +61,7 @@ export default function InviteModal({
         const controller = new AbortController()
 
         const searchUsers = async () => {
-            setLoading("search")
+            setIsSearching(true)
 
             try {
                 const res = await axiosInstance.get<
@@ -73,7 +85,7 @@ export default function InviteModal({
                     }
                 }
             } finally {
-                setLoading(null)
+                setIsSearching(false)
             }
         }
 
@@ -85,12 +97,11 @@ export default function InviteModal({
     const sendInvite = async (userEmail: string) => {
         if (
             userEmail === ownerEmail ||
-            loading === "invite"
+            invitingEmail
         )
             return
 
         setInvitingEmail(userEmail)
-        setLoading("invite")
 
         try {
             const res = await axiosInstance.post<
@@ -105,19 +116,22 @@ export default function InviteModal({
                 }
             )
 
-            res.data.success
-                ? toast.success(res.data.message)
-                : toast.error(res.data.message)
-        } catch (error: any) {
-            if (error instanceof AxiosError) {
-                toast.error(
-                    error?.response?.data?.message
-                )
+            const { success, message } = res.data;
+
+            if (success) {
+                toast.success(message)
+
+                setUsers((prev) => prev.filter((user) => user.email !== userEmail))
+
+                setRefreshInvitations((prev) => prev + 1)
             } else {
-                toast.error(error.message)
+                toast.error(message)
             }
+        } catch (error: any) {
+            if (error instanceof AxiosError) toast.error(error?.response?.data?.message);
+            else toast.error(error.message || "Something went wrong")
+
         } finally {
-            setLoading(null)
             setInvitingEmail(null)
         }
     }
@@ -156,18 +170,19 @@ export default function InviteModal({
                         />
                     </Field>
 
-                    {loading === "search" && (
+                    {isSearching && (
                         <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                             <Loader2Icon className="h-4 w-4 animate-spin" />
-                            Searching users...
+                            Searching
+                            users...
                         </div>
                     )}
 
-                    {debouncedQuery.length >= 2 &&
-                        !loading &&
-                        users.length === 0 && (
+                    {debouncedQuery.length >= 2 && !isSearching && users.length === 0 &&
+                        (
                             <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                                No users found
+                                No users
+                                found
                             </div>
                         )}
 
@@ -245,6 +260,8 @@ export default function InviteModal({
                             })}
                         </div>
                     )}
+
+                    <RoomInvitationsComponent roomId={roomId} authToken={authToken} refreshKey={refreshInvitations} />
                 </div>
             </DialogContent>
         </Dialog>
