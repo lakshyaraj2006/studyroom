@@ -76,7 +76,11 @@ const sendInvite = asyncHandler(
     async (req: Request, res: Response) => {
         const { roomId } = req.params;
 
-        const result = await roomService.sendInvite(req.body.email, req.params.roomId, req.protocol + '://' + req.host);
+        const frontendUrl = process.env.FRONTEND_URL;
+
+        if (!frontendUrl) throw new Error("Frontend url not specified!");
+
+        const result = await roomService.sendInvite(req.body.email, req.params.roomId, process.env.FRONTEND_URL!);
 
         return res
             .status(200)
@@ -221,4 +225,15 @@ const checkMember = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember };
+const searchUserByNameOrEmail = asyncHandler(
+    async (req: Request, res: Response) => {
+
+        const result = await roomService.searchUserByNameOrEmail(req.params.roomId, req.query.q as string | undefined);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, `Users fetched`))
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail };

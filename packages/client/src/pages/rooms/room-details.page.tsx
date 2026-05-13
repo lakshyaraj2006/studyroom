@@ -11,6 +11,7 @@ import Discussions from "@/components/rooms/discussions.component"
 import { Button } from "@/components/ui/button"
 import { AxiosError } from "axios"
 import { toast } from "sonner"
+import InviteModal from "@/components/rooms/invite-modal.component"
 
 type LoadingState =
     | "idle"
@@ -49,13 +50,13 @@ export default function RoomDetails() {
         setLoading("fetchingRoom")
         try {
             const headers = authToken ? { "Authorization": `Bearer ${authToken}` } : {}
-            
+
             const res = await axiosInstance.get<ServerResponse<Room>>(
                 `/rooms/${roomId}`,
                 { headers }
             )
             setRoomDetails(res.data.data);
-            
+
             // Fixed: Added 'await' so finally() doesn't fire prematurely
             await checkMember();
         } catch (err) {
@@ -125,7 +126,11 @@ export default function RoomDetails() {
     return (
         <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-
+                <div className="flex items-center justify-end">
+                    {
+                        authToken && usrInfo?.id === roomDetails.room_creator._id && <InviteModal roomId={roomDetails._id} authToken={authToken} ownerEmail={roomDetails.room_creator.email} />
+                    }
+                </div>
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border">
                     <img
                         src={roomDetails.room_image || "/images/room-default.jpg"}

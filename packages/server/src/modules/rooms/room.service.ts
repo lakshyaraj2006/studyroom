@@ -7,6 +7,7 @@ import { RoomInvite } from "./room-invite.model";
 import { sendRoomInviteEmail } from "@/jobs/emails/sendRoomInvite";
 import mongoose from "mongoose";
 import { sendRoomBlockedEmail } from "@/jobs/emails/sendRoomBlockedEmail";
+import { escapeRegex } from "@/shared/lib/escapeRegex";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
@@ -103,7 +104,8 @@ const getRoom = async (roomId: string, userId?: string) => {
                             _id: 1,
                             name: 1,
                             username: 1,
-                            avatar: 1
+                            avatar: 1,
+                            email: 1
                         }
                     }
                 ]
@@ -274,8 +276,8 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
     const invite_token_expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // TODO: Generate url based on frotend host
-    const generatedAcceptUrl = baseUrl + '/api/v1/rooms/accept-invite/' + room._id.toString() + '/' + invite_token;
-    const generatedRejectUrl = baseUrl + '/api/v1/rooms/reject-invite/' + room._id.toString() + '/' + invite_token;
+    const generatedAcceptUrl = baseUrl + '/rooms/accept-invite/' + room._id.toString() + '/' + invite_token;
+    const generatedRejectUrl = baseUrl + '/rooms/reject-invite/' + room._id.toString() + '/' + invite_token;
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -647,9 +649,8 @@ const getInvitations = async (userId: string, roomId: string) => {
                 sent_to_user: {
                     _id: "$sent_to_user._id",
                     name: "$sent_to_user.name",
-                    username: "$sent_to_user.username",
-                    avatar: "$sent_to_user.avatar",
-                    handle: "$sent_to_user.handle"
+                    email: "$sent_to_user.email",
+                    avatar: "$sent_to_user.avatar"
                 },
                 __v: 1,
                 createdAt: 1,
@@ -819,4 +820,48 @@ const checkMember = async (userId: string, room_id: string) => {
     return { roomName: room.room_name, isMember };
 }
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember };
+const searchUserByNameOrEmail = async (
+    roomId: string,
+    query: string | undefined
+) => {
+    if (!mongoose.isValidObjectId(roomId)) {
+        throw new ApiError(400, "Invalid room id!");
+    }
+
+    if (!query?.trim()) {
+        throw new ApiError(400, "Please enter name or email");
+    }
+
+    const room = await Room.findById(roomId).populate(
+        "room_users",
+        "_id name email avatar"
+    );
+
+    if (!room) {
+        throw new ApiError(404, "Room not found!");
+    }
+
+    const safeQuery = escapeRegex(query.trim());
+
+    const users = await User.find({
+        _id: { $nin: room.room_users.map((user: any) => user._id) }, // exclude room members
+        $or: [
+            {
+                name: {
+                    $regex: "^" + safeQuery,
+                    $options: "i",
+                },
+            },
+            {
+                email: {
+                    $regex: "^" + safeQuery,
+                    $options: "i",
+                },
+            },
+        ],
+    }).select("_id name email avatar");
+
+    return users;
+};
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail };
