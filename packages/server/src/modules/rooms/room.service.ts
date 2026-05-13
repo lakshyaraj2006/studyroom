@@ -822,7 +822,7 @@ const checkMember = async (userId: string, room_id: string) => {
 
 const searchUserByNameOrEmail = async (
     roomId: string,
-    query: string | undefined
+    query?: string
 ) => {
     if (!mongoose.isValidObjectId(roomId)) {
         throw new ApiError(400, "Invalid room id!");
@@ -832,29 +832,36 @@ const searchUserByNameOrEmail = async (
         throw new ApiError(400, "Please enter name or email");
     }
 
-    const room = await Room.findById(roomId).populate(
-        "room_users",
-        "_id name email avatar"
-    );
+    const room = await Room.findById(roomId).select("room_users");
 
     if (!room) {
         throw new ApiError(404, "Room not found!");
     }
 
+    // Get already invited users
+    const invites = await RoomInvite.find({ room_id: roomId })
+        .select("sent_to_user");
+
+    const excludedUserIds = [
+        ...room.room_users.map((id: any) => id.toString()),
+        ...invites.map((invite) => invite.sent_to_user.toString())
+    ];
+
     const safeQuery = escapeRegex(query.trim());
 
     const users = await User.find({
-        _id: { $nin: room.room_users.map((user: any) => user._id) }, // exclude room members
+        _id: { $nin: excludedUserIds },
+        is_deleted: false,
         $or: [
             {
                 name: {
-                    $regex: "^" + safeQuery,
+                    $regex: `^${safeQuery}`,
                     $options: "i",
                 },
             },
             {
                 email: {
-                    $regex: "^" + safeQuery,
+                    $regex: `^${safeQuery}`,
                     $options: "i",
                 },
             },
