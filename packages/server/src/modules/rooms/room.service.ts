@@ -43,10 +43,32 @@ const createRoom = async (userId: string, roomData: {
     return newRoom;
 };
 
-const getRooms = async () => {
+const getRooms = async (filter?: string, userId?: string) => {
+    const matchStage: Record<string, any> = {}
+
+    switch (filter) {
+        case "created":
+            if (!userId) {
+                throw new ApiError(401, "Please login to continue!");
+                break;
+            }
+            matchStage.room_creator = new mongoose.Types.ObjectId(userId);
+            break;
+            
+        case "joined":
+            if (!userId) throw new ApiError(401, "Please login to continue!");
+            matchStage.room_users = {
+                $in: [new mongoose.Types.ObjectId(userId)]
+            };
+            break;
+
+        default:
+            matchStage.access_type = AccessType.PUBLIC;
+    }
+
     const pipeline: mongoose.PipelineStage[] = [
         {
-            $match: { access_type: AccessType.PUBLIC }
+            $match: matchStage
         },
 
         {

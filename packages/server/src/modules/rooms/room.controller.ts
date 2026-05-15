@@ -22,7 +22,8 @@ const createRoom = asyncHandler(
 
 const getRooms = asyncHandler(
     async (req: Request, res: Response) => {
-        const result = await roomService.getRooms();
+        const { filter } = req.query;
+        const result = await roomService.getRooms(filter as string | undefined, req.user);
 
         return res
             .status(200)
