@@ -198,9 +198,11 @@ const updateRoom = async (userId: string, roomId: string, roomData: {
         roomId,
         {
             $set: {
-                ...rest,
+                room_name: roomData.name ?? room.room_name,
+                room_tagline: roomData.tagline ?? room.room_tagline,
                 room_topics,
-                room_image: uploadedFileUrl ? uploadedFileUrl : room.room_image
+                access_type: roomData.access_type ?? room.access_type,
+                room_image: uploadedFileUrl ?? room.room_image
             }
         },
         {
