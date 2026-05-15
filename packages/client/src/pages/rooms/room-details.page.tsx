@@ -12,6 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { AxiosError } from "axios"
 import { toast } from "sonner"
 import InviteModal from "@/components/rooms/invite-modal.component"
+import DeleteRoomButton from "@/components/rooms/delete-room-button"
 
 type LoadingState =
     | "idle"
@@ -131,6 +132,10 @@ export default function RoomDetails() {
                         authToken && usrInfo?.id === roomDetails.room_creator._id &&
                         <div className="flex items-center gap-2">
                             <Link to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline" })}>Edit</Link>
+                            <DeleteRoomButton
+                                authToken={authToken}
+                                roomId={roomDetails._id}
+                            />
                             <InviteModal roomId={roomDetails._id} authToken={authToken} ownerEmail={roomDetails.room_creator.email} />
                         </div>
                     }
