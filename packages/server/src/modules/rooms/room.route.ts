@@ -6,7 +6,7 @@ import { checkAuthOptional } from "@/core/middlewares/checkAuthOptional";
 const router = Router();
 
 router.route('/create').post(checkAuth, upload.single("image"), roomController.createRoom);
-router.route('/').get(roomController.getRooms);
+router.route('/').get(checkAuthOptional, roomController.getRooms);
 router.route('/:roomId').get(checkAuthOptional, roomController.getRoom);
 router.route('/update/:roomId').patch(checkAuth, upload.single("image"), roomController.updateRoom);
 router.route('/delete/:roomId').delete(checkAuth, roomController.deleteRoom);
