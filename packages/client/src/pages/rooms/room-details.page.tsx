@@ -2,13 +2,13 @@ import { type Room } from "@/interfaces/room"
 import { type ServerResponse } from "@/interfaces/server-response"
 import axiosInstance from "@/lib/api"
 import { useEffect, useState, useCallback } from "react"
-import { useParams, Navigate } from "react-router-dom"
+import { useParams, Navigate, Link } from "react-router-dom"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/hooks/useAuth"
 import Discussions from "@/components/rooms/discussions.component"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { AxiosError } from "axios"
 import { toast } from "sonner"
 import InviteModal from "@/components/rooms/invite-modal.component"
@@ -128,7 +128,11 @@ export default function RoomDetails() {
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
                 <div className="flex items-center justify-end">
                     {
-                        authToken && usrInfo?.id === roomDetails.room_creator._id && <InviteModal roomId={roomDetails._id} authToken={authToken} ownerEmail={roomDetails.room_creator.email} />
+                        authToken && usrInfo?.id === roomDetails.room_creator._id &&
+                        <div className="flex items-center gap-2">
+                            <Link to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline" })}>Edit</Link>
+                            <InviteModal roomId={roomDetails._id} authToken={authToken} ownerEmail={roomDetails.room_creator.email} />
+                        </div>
                     }
                 </div>
                 <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border">

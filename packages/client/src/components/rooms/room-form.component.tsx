@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { AxiosError } from "axios"
+import { AxiosError, type AxiosResponse } from "axios"
 import axiosInstance from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { type ServerResponse } from "@/interfaces/server-response"
@@ -27,10 +27,11 @@ function getError(error: any) {
 
 // Room form props
 export type RoomFormProps = {
-    initialData?: RoomFormValues | undefined
+    initialData?: Room | undefined,
+    roomId?: string
 }
 
-export default function RoomForm({ initialData }: RoomFormProps) {
+export default function RoomForm({ initialData, roomId }: RoomFormProps) {
     const { authToken } = useAuth();
     const navigate = useNavigate();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,13 +46,25 @@ export default function RoomForm({ initialData }: RoomFormProps) {
         resolver: zodResolver(RoomFormSchema),
         mode: "all",
         defaultValues: {
-            name: initialData?.name || "",
-            tagline: initialData?.tagline || "",
-            topics: initialData?.topics || "",
-            access_type: initialData?.access_type ?? "public",
+            name: "",
+            tagline: "",
+            topics: "",
+            access_type: "public",
             image: undefined,
         },
     })
+
+    useEffect(() => {
+        if (initialData) {
+            reset({
+                name: initialData.room_name,
+                tagline: initialData.room_tagline,
+                topics: initialData.room_topics.join(", "),
+                access_type: initialData.access_type,
+                image: undefined,
+            })
+        }
+    }, [initialData, reset])
 
     const onSubmit = async (data: RoomFormValues) => {
         if (isSubmitting) return
@@ -76,15 +89,29 @@ export default function RoomForm({ initialData }: RoomFormProps) {
 
             formData.append("access_type", data.access_type)
 
-            const response = await axiosInstance.post<ServerResponse<Room>>(
-                "/rooms/create",
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${authToken}`,
-                    },
-                }
-            )
+            let response: AxiosResponse<ServerResponse<Room>>;
+
+            if (roomId) {
+                response = await axiosInstance.patch<ServerResponse<Room>>(
+                    `/rooms/update/${roomId}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${authToken}`,
+                        },
+                    }
+                )
+            } else {
+                response = await axiosInstance.post<ServerResponse<Room>>(
+                    "/rooms/create",
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${authToken}`,
+                        },
+                    }
+                )
+            }
 
             const { success, message } = response.data
 
@@ -197,8 +224,8 @@ export default function RoomForm({ initialData }: RoomFormProps) {
             <Button type="submit" className="flex items-center justify-center gap-2 w-full" disabled={isSubmitting}>
                 {
                     isSubmitting
-                        ? <><Loader2Icon className="animate-spin" /> <p>Creating Room...</p></>
-                        : <><PlusIcon /> <p>Create Room</p></>
+                        ? <><Loader2Icon className="animate-spin" /> <p>{roomId ? "Updating" : "Creating"} Room...</p></>
+                        : <><PlusIcon /> <p>{roomId ? "Update" : "Create"} Room</p></>
                 }
             </Button>
         </form>
