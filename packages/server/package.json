@@ -21,6 +21,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.4",
+    "@types/nodemailer": "^7.0.9",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
@@ -36,6 +37,8 @@
     "mjml": "^4.18.0",
     "mongoose": "^9.0.2",
     "multer": "^2.0.2",
-    "nanoid": "^3.3.11"
+    "nanoid": "^3.3.11",
+    "nodemailer": "^7.0.12",
+    "tsconfig-paths": "^4.2.0"
   }
 }

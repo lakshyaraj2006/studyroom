@@ -25,7 +25,7 @@ export default function ProfileAvatar({
     setIsEditing,
     onUpdated,
 }: ProfileAvatarProps) {
-    const { authToken } = useAuth();
+    const { authToken, setUsrInfo } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [avatarAction, setAvatarAction] = useState<AvatarAction>(null)
 
@@ -39,7 +39,7 @@ export default function ProfileAvatar({
         try {
             setAvatarAction("upload")
 
-            const response = await axiosInstance.post<ServerResponse<null>>(
+            const response = await axiosInstance.post<ServerResponse<{avatar: string | undefined}>>(
                 "/profile/upload-avatar",
                 formData,
                 {
@@ -52,6 +52,10 @@ export default function ProfileAvatar({
             const { success, message } = response.data
             success ? toast.success(message) : toast.error(message)
             if (success) {
+                setUsrInfo(prev => prev ? {
+                    ...prev,
+                    avatar: response.data.data.avatar + `?t=${Date.now()}`
+                } : prev);
                 onUpdated();
                 setIsEditing(false);
             }
@@ -83,6 +87,10 @@ export default function ProfileAvatar({
             const { success, message } = response.data
             success ? toast.success(message) : toast.error(message)
             if (success) {
+                setUsrInfo(prev => prev ? {
+                    ...prev,
+                    avatar: undefined
+                } : prev);
                 onUpdated();
                 setIsEditing(false);
             }

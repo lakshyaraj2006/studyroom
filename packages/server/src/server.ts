@@ -1,11 +1,15 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import "dotenv/config";
-import { connectDB } from "./lib/db";
+import { connectDB } from "@/core/db";
 import cookieParser from "cookie-parser";
-import { userRouter } from "./routes/user.route";
+import { userRouter } from "@/modules/user/user.route";
 import cors from "cors";
-import { profileRouter } from "./routes/profile.route";
-import { errorHandler } from "./middlewares";
+import { profileRouter } from "@/modules/profile/profile.route";
+import { errorHandler } from "@/core/middlewares";
+import { roomRouter } from "@/modules/rooms/room.route";
+
+import dns from "node:dns/promises";
+dns.setServers(['1.1.1.1', '8.8.8.8']);
 
 connectDB()
 .then(() => {
@@ -23,6 +27,7 @@ connectDB()
     
     app.use("/api/v1/users", userRouter);
     app.use("/api/v1/profile", profileRouter);
+    app.use("/api/v1/rooms", roomRouter);
     
     app.use(errorHandler);
 

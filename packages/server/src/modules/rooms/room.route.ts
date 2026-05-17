@@ -1,0 +1,27 @@
+import { Router } from "express";
+import { checkAuth, upload } from "@/core/middlewares";
+import { roomController } from "./room.controller";
+import { checkAuthOptional } from "@/core/middlewares/checkAuthOptional";
+
+const router = Router();
+
+router.route('/create').post(checkAuth, upload.single("image"), roomController.createRoom);
+router.route('/').get(checkAuthOptional, roomController.getRooms);
+router.route('/:roomId').get(checkAuthOptional, roomController.getRoom);
+router.route('/update/:roomId').patch(checkAuth, upload.single("image"), roomController.updateRoom);
+router.route('/delete/:roomId').delete(checkAuth, roomController.deleteRoom);
+router.route('/send-invite/:roomId').post(checkAuth, roomController.sendInvite);
+router.route('/accept-invite/:roomId/:token').post(checkAuth, roomController.acceptInvite);
+router.route('/reject-invite/:roomId/:token').delete(checkAuth, roomController.rejectInvite);
+router.route('/remove-user/:roomId/').delete(checkAuth, roomController.removeUser);
+router.route('/block-user/:roomId/').patch(checkAuth, roomController.blockUser);
+router.route('/get-blocked-users/:roomId/').get(checkAuth, roomController.getBlockedUsers);
+router.route('/unblock-user/:roomId/').patch(checkAuth, roomController.unblockUser);
+router.route('/get-invitations/:roomId/').get(checkAuth, roomController.getInvitations);
+router.route('/revoke-invitation/:roomId/').delete(checkAuth, roomController.revokeInvitation);
+router.route('/join-room/:roomId/').patch(checkAuth, roomController.joinRoom);
+router.route('/leave-room/:roomId/').patch(checkAuth, roomController.leaveRoom);
+router.route('/check-member/:roomId/').get(checkAuth, roomController.checkMember);
+router.route('/search-room-users/:roomId').get(roomController.searchUserByNameOrEmail);
+
+export { router as roomRouter };

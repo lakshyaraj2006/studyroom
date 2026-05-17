@@ -5,6 +5,8 @@ import RootLayout from './layouts/RootLayout';
 import { baseRoutes } from './routes/base.routes';
 import { profileRoutes } from './routes/profile.routes';
 import NotFoundPage from './pages/error/NotFound';
+import { AuthProvider } from './context/AuthProvider';
+import { roomRoutes } from './routes/rooms.routes';
 
 const router = createBrowserRouter([
   {
@@ -23,13 +25,22 @@ const router = createBrowserRouter([
     children: profileRoutes
   },
   {
+    path: '/rooms',
+    element: <RootLayout />,
+    children: roomRoutes
+  },
+  {
     path: "*",
     element: <NotFoundPage />,
   },
 ])
 
 function App() {
-  return <RouterProvider router={router} />
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  )
 }
 
 export default App
