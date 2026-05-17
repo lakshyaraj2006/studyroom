@@ -2,14 +2,15 @@ import type { Profile } from "./profile";
 
 export type RoomUser = Pick<
     Profile,
-    "_id" | "name" | "username" | "avatar"
+    "_id" | "name" | "username" | "handle" | "avatar"
 >;
 
 export interface Room {
     _id: string;
     room_name: string;
     room_creator: { email: string } & RoomUser;
-    room_users: string[];
+    room_users: RoomUser[];
+    blocked_users?: RoomUser[];
     room_topics: string[];
     room_tagline: string;
     access_type: "public" | "private";

@@ -95,7 +95,25 @@ const getRooms = async (filter?: string, userId?: string) => {
                 preserveNullAndEmptyArrays: true
             }
         },
-
+        {
+            $lookup: {
+                from: "users",
+                localField: "room_users",
+                foreignField: "_id",
+                as: "room_users",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            username: 1,
+                            handle: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
         {
             $project: {
                 blocked_users: 0
@@ -138,6 +156,44 @@ const getRoom = async (roomId: string, userId?: string) => {
                 path: "$room_creator",
                 preserveNullAndEmptyArrays: true
             }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "room_users",
+                foreignField: "_id",
+                as: "room_users",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            username: 1,
+                            handle: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "blocked_users",
+                foreignField: "_id",
+                as: "blocked_users",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            username: 1,
+                            handle: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
         }
     ];
 
@@ -177,8 +233,6 @@ const getRoom = async (roomId: string, userId?: string) => {
 
         return room;
     }
-
-    delete room.blocked_users;
 
     return room;
 };

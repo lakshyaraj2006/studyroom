@@ -2,7 +2,7 @@ import { type Room } from "@/interfaces/room"
 import { type ServerResponse } from "@/interfaces/server-response"
 import axiosInstance from "@/lib/api"
 import { useEffect, useState, useCallback } from "react"
-import { useParams, Navigate, Link } from "react-router-dom"
+import { useParams, Navigate, Link, useNavigate } from "react-router-dom"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,12 @@ import { AxiosError } from "axios"
 import { toast } from "sonner"
 import InviteModal from "@/components/rooms/invite-modal.component"
 import DeleteRoomButton from "@/components/rooms/delete-room-button"
+import RoomUsersComponent from "@/components/rooms/room-users"
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar";
 
 type LoadingState =
     | "idle"
@@ -23,6 +29,7 @@ type LoadingState =
 export default function RoomDetails() {
     const { roomId } = useParams()
     const { authToken, usrInfo } = useAuth()
+    const navigate = useNavigate();
 
     const [roomDetails, setRoomDetails] = useState<Room | null>(null)
     const [loading, setLoading] = useState<LoadingState>("idle")
@@ -56,6 +63,8 @@ export default function RoomDetails() {
                 `/rooms/${roomId}`,
                 { headers }
             )
+            console.log(res.data.data);
+
             setRoomDetails(res.data.data);
 
             // Fixed: Added 'await' so finally() doesn't fire prematurely
@@ -159,13 +168,36 @@ export default function RoomDetails() {
                                 {roomDetails.room_tagline}
                             </p>
 
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] sm:text-xs opacity-80">
-                                <span className="truncate max-w-full">
-                                    By {roomDetails.room_creator.name}
-                                </span>
-                                <span>
-                                    {roomDetails.room_users.length} members
-                                </span>
+                            <div className="flex items-center justify-between gap-3 text-[11px] sm:text-xs opacity-80">
+                                <div className="flex items-center gap-2 min-w-0" onClick={() =>
+                                    navigate(`/profile/${roomDetails.room_creator.handle}`)
+                                }>
+                                    <Avatar className="h-6 w-6 shrink-0 cursor-pointer">
+                                        <AvatarImage
+                                            src={roomDetails.room_creator.avatar || "/user.png"}
+                                        />
+                                        <AvatarFallback>
+                                            {roomDetails.room_creator.name.slice(0, 2).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+
+                                    <span className="truncate">
+                                        By {roomDetails.room_creator.name}
+                                    </span>
+                                </div>
+
+                                <div className="shrink-0">
+                                    <RoomUsersComponent
+                                        roomId={roomDetails._id}
+                                        room_users={roomDetails.room_users}
+                                        blocked_users={roomDetails.blocked_users}
+                                        setRoomDetails={setRoomDetails}
+                                        authToken={authToken}
+                                        isOwner={
+                                            authToken ? usrInfo?.id === roomDetails.room_creator._id : false
+                                        }
+                                    />
+                                </div>
                             </div>
 
                         </div>
