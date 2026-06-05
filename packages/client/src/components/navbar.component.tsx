@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
 import { LogInIcon, Building2 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { NotificationBell } from "./notifications/notification-bell.component";
 
 export const navLinks = [
     { name: "Home", href: "/" },
@@ -60,6 +61,7 @@ export default function Navbar() {
 
                 {/* Right */}
                 <div className="flex items-center gap-3">
+                    {authToken && <NotificationBell />}
                     {authToken ? (
                         <UserDropdown />
                     ) : (

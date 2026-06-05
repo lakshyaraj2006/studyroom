@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/sidebar/app-sidebar.component";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
+import { NotificationsModal } from "@/components/notifications/notifications-modal.component";
 
 export default function RootLayout() {
     return (
@@ -24,6 +25,7 @@ export default function RootLayout() {
             </div>
 
             <Toaster />
+            <NotificationsModal />
         </SidebarProvider>
     );
 }

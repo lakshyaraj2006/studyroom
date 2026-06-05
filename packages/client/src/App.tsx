@@ -7,6 +7,7 @@ import { profileRoutes } from './routes/profile.routes';
 import NotFoundPage from './pages/error/NotFound';
 import { AuthProvider } from './context/AuthProvider';
 import { roomRoutes } from './routes/rooms.routes';
+import { NotificationProvider } from './context/NotificationProvider';
 
 const router = createBrowserRouter([
   {
@@ -38,7 +39,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+      </NotificationProvider>
     </AuthProvider>
   )
 }
