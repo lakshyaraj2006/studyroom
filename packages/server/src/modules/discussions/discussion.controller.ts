@@ -3,6 +3,9 @@ import { asyncHandler } from "@/shared/utils/AsyncHandler";
 import { ApiResponse } from "@/shared/utils/ApiResponse";
 import { ApiError } from "@/core/errors/ApiError";
 import { discussionService } from "./discussion.service";
+import { Room } from "../rooms/room.model";
+import { notificationService } from "@/modules/notifications/notification.service";
+import { NotificationType } from "@/modules/notifications/notification.model";
 import {
     broadcastDiscussionCreated,
     broadcastDiscussionUpdated,
@@ -21,6 +24,20 @@ const createDiscussion = asyncHandler(async (req: Request, res: Response) => {
 
     if (result) {
         broadcastDiscussionCreated(roomId, result);
+
+        // Fetch the room to notify the creator (if the author is not the creator)
+        const room = await Room.findById(roomId).select("room_creator room_name");
+        if (room && room.room_creator.toString() !== userId) {
+            await notificationService.createNotification({
+                recipient: room.room_creator.toString(),
+                sender: userId,
+                type: NotificationType.NEW_DISCUSSION,
+                title: "New Discussion",
+                message: `${(result.user as any).name} started a new discussion in ${room.room_name}`,
+                room_id: roomId,
+                metadata: { discussionId: result._id }
+            });
+        }
     }
 
     return res

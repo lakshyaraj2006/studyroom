@@ -11,6 +11,8 @@ import {
     broadcastUserBlocked,
     broadcastUserUnblocked
 } from "../discussions/discussion.socket";
+import { notificationService } from "@/modules/notifications/notification.service";
+import { NotificationType } from "@/modules/notifications/notification.model";
 
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {
@@ -91,9 +93,20 @@ const sendInvite = asyncHandler(
 
         const result = await roomService.sendInvite(req.body.email, req.params.roomId, process.env.FRONTEND_URL!);
 
+        // Create notification for invitee
+        await notificationService.createNotification({
+            recipient: result.id.toString(),
+            sender: req.user as string,
+            type: NotificationType.ROOM_INVITE,
+            title: "New Room Invitation",
+            message: `You have been invited to join the room: ${result.roomName}`,
+            room_id: result.roomId.toString(),
+            metadata: { inviteToken: result.inviteToken }
+        });
+
         return res
             .status(200)
-            .json(new ApiResponse(200, null, "Room Invite sent to " + result));
+            .json(new ApiResponse(200, null, "Room Invite sent to " + result.name));
     }
 )
 
@@ -106,11 +119,22 @@ const acceptInvite = asyncHandler(
         const user = await User.findById(req.user).select("_id name username handle avatar");
         if (user) {
             broadcastUserJoined(roomId, user);
+
+            if (result.creatorId.toString() !== req.user) {
+                await notificationService.createNotification({
+                    recipient: result.creatorId.toString(),
+                    sender: req.user as string,
+                    type: NotificationType.ROOM_INVITE_ACCEPTED,
+                    title: "Room Invitation Accepted",
+                    message: `${user.name} accepted your invitation and joined ${result.roomName}`,
+                    room_id: result.roomId.toString()
+                });
+            }
         }
 
         return res
             .status(200)
-            .json(new ApiResponse(200, null, "You have joined " + result + " room"));
+            .json(new ApiResponse(200, null, "You have joined " + result.roomName + " room"));
     }
 )
 
@@ -119,6 +143,20 @@ const rejectInvite = asyncHandler(
         const { roomId } = req.params;
 
         const result = await roomService.rejectInvite(req.user as string, req.params.roomId, req.params.token);
+
+        const user = await User.findById(req.user).select("_id name username handle avatar");
+        if (user) {
+            if (result.creatorId.toString() !== req.user) {
+                await notificationService.createNotification({
+                    recipient: result.creatorId.toString(),
+                    sender: req.user as string,
+                    type: NotificationType.ROOM_INVITE_REJECTED,
+                    title: "Room Invitation Rejected",
+                    message: `${user.name} declined your invitation to join ${result.roomName}`,
+                    room_id: result.roomId.toString()
+                });
+            }
+        }
 
         return res
             .status(200)
@@ -151,11 +189,21 @@ const blockUser = asyncHandler(
         const user = await User.findById(userToBlockId).select("_id name username handle avatar");
         if (user) {
             broadcastUserBlocked(roomId, user);
+
+            await notificationService.createNotification({
+                recipient: userToBlockId,
+                sender: req.user as string,
+                type: NotificationType.USER_BLOCKED,
+                title: "Blocked from Room",
+                message: `You have been blocked from the room ${result.roomName}. Reason: ${reason}`,
+                room_id: result.roomId.toString(),
+                metadata: { reason }
+            });
         }
 
         return res
             .status(200)
-            .json(new ApiResponse(200, null, result + " was blocked from the room!"));
+            .json(new ApiResponse(200, null, result.blockedUserName + " was blocked from the room!"));
     }
 )
 
@@ -185,11 +233,20 @@ const unblockUser = asyncHandler(
         const user = await User.findById(blockedUserId).select("_id name username handle avatar");
         if (user) {
             broadcastUserUnblocked(roomId, user);
+
+            await notificationService.createNotification({
+                recipient: blockedUserId,
+                sender: req.user as string,
+                type: NotificationType.USER_UNBLOCKED,
+                title: "Unblocked from Room",
+                message: `You have been unblocked and re-added to the room ${result.roomName}`,
+                room_id: result.roomId.toString()
+            });
         }
 
         return res
             .status(200)
-            .json(new ApiResponse(200, null, result + " was unblocked from room!"))
+            .json(new ApiResponse(200, null, result.unblockedUserName + " was unblocked from room!"))
     }
 )
 
@@ -226,16 +283,27 @@ const joinRoom = asyncHandler(
 
         if (!roomId) throw new ApiError(400, "Room Id is required!");
 
-        const { roomName } = await roomService.joinRoom(req.user as string, roomId as string);
+        const result = await roomService.joinRoom(req.user as string, roomId as string);
 
         const user = await User.findById(req.user).select("_id name username handle avatar");
         if (user) {
             broadcastUserJoined(roomId, user);
+
+            if (result.creatorId.toString() !== req.user) {
+                await notificationService.createNotification({
+                    recipient: result.creatorId.toString(),
+                    sender: req.user as string,
+                    type: NotificationType.USER_JOINED_ROOM,
+                    title: "New Room Member",
+                    message: `${user.name} joined your room ${result.roomName}`,
+                    room_id: result.roomId.toString()
+                });
+            }
         }
 
         return res
             .status(200)
-            .json(new ApiResponse(200, null, `You joined ${roomName} room!`))
+            .json(new ApiResponse(200, null, `You joined ${result.roomName} room!`))
     }
 )
 

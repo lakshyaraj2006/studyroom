@@ -387,7 +387,7 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
         throw err;
     }
 
-    return user.name;
+    return { name: user.name, id: user._id, roomName: room.room_name, roomId: room._id, inviteToken: invite_token };
 }
 
 const acceptInvite = async (userId: string, roomId: string, token: string) => {
@@ -441,7 +441,7 @@ const acceptInvite = async (userId: string, roomId: string, token: string) => {
         session.endSession();
     }
 
-    return room.room_name;
+    return { roomName: room.room_name, creatorId: room.room_creator, roomId: room._id };
 }
 
 const rejectInvite = async (userId: string, roomId: string, token: string) => {
@@ -483,7 +483,7 @@ const rejectInvite = async (userId: string, roomId: string, token: string) => {
         session.endSession();
     }
 
-    return room.room_name;
+    return { roomName: room.room_name, creatorId: room.room_creator, roomId: room._id };
 }
 
 const removeUser = async (userId: string, userToRemoveId: string, roomId: string) => {
@@ -588,7 +588,7 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
         throw err;
     }
 
-    return userToBlock.name;
+    return { blockedUserName: userToBlock.name, roomName: room.room_name, roomId: room._id };
 }
 
 const getBlockedUsers = async (userId: string, roomId: string) => {
@@ -686,7 +686,7 @@ const unblockUser = async (userId: string, blockedUserId: string, roomId: string
         session.endSession();
     }
 
-    return userToUnblock.name;
+    return { unblockedUserName: userToUnblock.name, roomName: room.room_name, roomId: room._id };
 }
 
 const getInvitations = async (userId: string, roomId: string) => {
@@ -838,7 +838,7 @@ const joinRoom = async (userId: string, room_id: string) => {
         session.endSession();
     }
 
-    return { roomName: room.room_name };
+    return { roomName: room.room_name, creatorId: room.room_creator, roomId: room._id };
 }
 
 const leaveRoom = async (userId: string, room_id: string) => {
