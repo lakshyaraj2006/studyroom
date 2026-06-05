@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { buttonVariants } from "../ui/button";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function RoomCard({
     _id,
@@ -20,64 +21,70 @@ export default function RoomCard({
     room_topics,
     room_image,
 }: Room) {
-    const firstName = room_creator.name.split(/\s+/)[0];
-    const formattedName =
-        firstName.charAt(0).toUpperCase() + firstName.slice(1);
-
     return (
-        <Card className="overflow-hidden flex flex-col justify-between">
-            <div className="relative -mx-6 -mt-6 mb-4 overflow-hidden rounded-t-xl">
-                <img
-                    src={room_image || "/images/room-default.jpg"}
-                    alt={room_name}
-                    className="h-40 w-full object-cover object-top"
-                />
-            </div>
-            <CardHeader>
-                <CardTitle>{room_name}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                    {room_tagline}
-                </CardDescription>
-
-                <div className="flex flex-wrap gap-1 mt-2">
-                    {room_topics.map((topic) => (
-                        <span
-                            key={topic}
-                            className="text-xs bg-muted px-2 py-0.5 rounded"
-                        >
-                            {topic}
-                        </span>
-                    ))}
-                    {room_topics.length > 4 && (
-                        <span className="text-xs text-muted-foreground">
-                            +{room_topics.length - 4}
-                        </span>
-                    )}
+        <Card className="group relative overflow-hidden flex flex-col justify-between border border-border/40 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 -translate-y-0.5 hover:-translate-y-1.5 transition-all duration-300 bg-card rounded-2xl pt-0 pb-0 gap-0">
+            <div>
+                <div className="relative overflow-hidden aspect-video bg-muted">
+                    <img
+                        src={room_image || "/images/room-default.jpg"}
+                        alt={room_name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {/* Soft gradient mask overlay on image */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
-            </CardHeader>
 
-            <CardContent className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                <CardHeader className="p-5 pb-3">
+                    <CardTitle className="text-xl font-bold tracking-tight text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-300">
+                        {room_name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2 text-sm text-muted-foreground leading-relaxed mt-1.5">
+                        {room_tagline}
+                    </CardDescription>
+
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                        {room_topics.slice(0, 4).map((topic) => (
+                            <span
+                                key={topic}
+                                className="text-xs bg-secondary text-secondary-foreground px-2.5 py-0.5 rounded-full font-medium"
+                            >
+                                {topic}
+                            </span>
+                        ))}
+                        {room_topics.length > 4 && (
+                            <span className="text-xs text-muted-foreground font-semibold px-1 py-0.5">
+                                +{room_topics.length - 4}
+                            </span>
+                        )}
+                    </div>
+                </CardHeader>
+            </div>
+
+            <CardContent className="p-5 pt-3 border-t border-border/40 flex items-center justify-between mt-4 bg-muted/10 dark:bg-card/50">
+                <Link to={`/profile/${room_creator.handle}`} className="flex items-center gap-2.5 hover:text-primary transition-colors group/owner">
+                    <Avatar className="h-8 w-8 ring-2 ring-background shadow-xs">
                         <AvatarImage src={room_creator.avatar || "/user.png"} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                             {room_creator.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
 
                     <div className="flex flex-col">
-                        <span className="text-sm font-medium">{formattedName}</span>
-                        <span className="text-xs text-muted-foreground">
-                            {room_users.length} members
+                        <span className="text-xs font-semibold text-foreground group-hover/owner:text-primary transition-colors leading-tight">{room_creator.name}</span>
+                        <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+                            {room_users.length} {room_users.length === 1 ? "member" : "members"}
                         </span>
                     </div>
-                </div>
+                </Link>
 
                 <Link
                     to={`/rooms/${_id}`}
-                    className={buttonVariants({ size: "sm" })}
+                    className={cn(
+                        buttonVariants({ size: "sm" }),
+                        "shadow-sm shadow-primary/15 hover:shadow-primary/30 transition-all duration-300 active:scale-95 cursor-pointer"
+                    )}
                 >
-                    View <ChevronRight className="ml-1 h-4 w-4" />
+                    View <ChevronRight className="ml-1 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
             </CardContent>
         </Card>

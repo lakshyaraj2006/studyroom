@@ -71,31 +71,31 @@ export default function RejectRoomInvite() {
             : XCircle;
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
-            <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-xl p-8">
+        <div className="min-h-screen bg-background flex items-center justify-center px-6 transition-colors duration-300">
+            <div className="w-full max-w-md rounded-3xl border border-border/40 bg-card shadow-xl p-8">
                 <div className="flex flex-col items-center text-center space-y-6">
                     <div
                         className={cn(
                             "rounded-2xl p-4",
-                            loading && "bg-indigo-50",
-                            res.success && "bg-green-50",
-                            !loading && !res.success && "bg-red-50"
+                            loading && "bg-primary/10",
+                            res.success && "bg-green-500/10",
+                            !loading && !res.success && "bg-destructive/10"
                         )}
                     >
                         <StatusIcon
                             className={cn(
                                 "h-8 w-8",
-                                loading && "animate-spin text-indigo-600",
-                                res.success && "text-green-600",
+                                loading && "animate-spin text-primary",
+                                res.success && "text-green-500",
                                 !loading &&
                                 !res.success &&
-                                "text-red-600"
+                                "text-destructive"
                             )}
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <h1 className="text-2xl font-semibold text-slate-900">
+                        <h1 className="text-2xl font-semibold text-foreground">
                             {loading
                                 ? "Rejecting invite"
                                 : res.success
@@ -103,7 +103,7 @@ export default function RejectRoomInvite() {
                                     : "Unable to reject invite"}
                         </h1>
 
-                        <p className="text-sm text-slate-500 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
                             {loading
                                 ? "We're verifying your invitation and rejecting it."
                                 : res.message}
@@ -111,7 +111,7 @@ export default function RejectRoomInvite() {
                     </div>
 
                     {loading && (
-                        <div className="flex items-center gap-2 text-sm text-indigo-600 font-medium">
+                        <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Sparkles className="h-4 w-4" />
                             Almost there...
                         </div>

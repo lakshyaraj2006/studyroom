@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import axiosInstance from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -24,44 +24,75 @@ const filters: {
 
 const Rooms = () => {
   const { authToken } = useAuth();
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomsCache, setRoomsCache] = useState<Record<RoomFilter, Room[] | null>>({
+    all: null,
+    created: null,
+    joined: null
+  });
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<RoomFilter>("all");
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeFilter = (searchParams.get("filter") as RoomFilter) || "all";
+  const rooms = roomsCache[activeFilter] || [];
 
-  useEffect(() => {
-    if (!authToken && activeFilter !== "all") {
-      setSearchParams({ filter: "all" }, { replace: true });
-      return;
-    }
-
-    getRooms();
-  }, [activeFilter, authToken]);
-
-  const getRooms = async () => {
+  const fetchAllRooms = useCallback(async () => {
     setLoading(true);
 
     try {
-      const response = await axiosInstance.get<ServerResponse<Room[]>>("/rooms", {
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
-        params: { filter: activeFilter }
-      });
+      if (authToken) {
+        const [allRes, createdRes, joinedRes] = await Promise.all([
+          axiosInstance.get<ServerResponse<Room[]>>("/rooms", {
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: { filter: "all" }
+          }),
+          axiosInstance.get<ServerResponse<Room[]>>("/rooms", {
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: { filter: "created" }
+          }),
+          axiosInstance.get<ServerResponse<Room[]>>("/rooms", {
+            headers: { Authorization: `Bearer ${authToken}` },
+            params: { filter: "joined" }
+          })
+        ]);
 
-      setRooms(response.data.data);
+        setRoomsCache({
+          all: allRes.data.data,
+          created: createdRes.data.data,
+          joined: joinedRes.data.data
+        });
+      } else {
+        const allRes = await axiosInstance.get<ServerResponse<Room[]>>("/rooms", {
+          params: { filter: "all" }
+        });
+
+        setRoomsCache({
+          all: allRes.data.data,
+          created: [],
+          joined: []
+        });
+      }
     } catch (err) {
       console.error("Failed to fetch rooms", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [authToken]);
+
+  useEffect(() => {
+    fetchAllRooms();
+  }, [fetchAllRooms]);
+
+  useEffect(() => {
+    if (!authToken && activeFilter !== "all") {
+      setActiveFilter("all");
+    }
+  }, [activeFilter, authToken]);
 
   const changeFilter = (filter: RoomFilter) => {
     if (!authToken && filter !== "all") return;
-    setSearchParams({ filter }, { replace: true });
+    setActiveFilter(filter);
   };
 
-  if (loading) {
+  if (loading || roomsCache[activeFilter] === null) {
     return (
       <div className="container max-w-4xl mx-auto py-10">
         <p className="text-sm text-muted-foreground">Loading rooms...</p>
@@ -70,43 +101,67 @@ const Rooms = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-6 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {authToken && <div className="flex flex-wrap gap-2">
-          {filters.map(({ value, label }) => {
-            return (
-              <button
-                key={value}
-                onClick={() => changeFilter(value)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all border",
-                  activeFilter === value
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-white text-gray-600 hover:border-indigo-300",
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>}
+    <div className="container max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
+      
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border/40 pb-6 gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+            Study Rooms
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Explore active spaces for focused learning
+          </p>
+        </div>
 
         {authToken && (
-          <Link to="/rooms/add" className={cn(buttonVariants())}>
+          <Link 
+            to="/rooms/add" 
+            className={cn(
+              buttonVariants({ size: "default" }),
+              "shadow-md shadow-primary/10 hover:shadow-primary/25 cursor-pointer active:scale-95 transition-all"
+            )}
+          >
             Create Room
           </Link>
         )}
       </div>
 
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {authToken && (
+          <div className="flex flex-wrap gap-2">
+            {filters.map(({ value, label }) => {
+              const isSelected = activeFilter === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => changeFilter(value)}
+                  className={cn(
+                    "px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 border cursor-pointer",
+                    isSelected
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                      : "bg-card text-muted-foreground border-border/50 hover:border-primary/50 hover:text-foreground"
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {rooms.length === 0 ? (
-        <div className="py-16 text-center">
-          <p className="text-sm text-muted-foreground">
-            No study rooms available yet
+        <div className="py-20 text-center border border-dashed border-border/60 rounded-2xl bg-card">
+          <p className="text-sm md:text-base text-muted-foreground font-medium">
+            No study rooms available yet. Be the first to create one!
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rooms.map(room => <RoomCard key={room._id} {...room} />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map(room => (
+            <RoomCard key={room._id} {...room} />
+          ))}
         </div>
       )}
     </div>

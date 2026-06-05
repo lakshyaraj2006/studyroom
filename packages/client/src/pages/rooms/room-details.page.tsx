@@ -218,13 +218,13 @@ export default function RoomDetails() {
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+        <div className="min-h-screen bg-background transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
                 <div className="flex items-center justify-end">
                     {
                         authToken && usrInfo?.id === roomDetails.room_creator._id &&
                         <div className="flex items-center gap-2">
-                            <Link to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline" })}>Edit</Link>
+                            <Link to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit</Link>
                             <DeleteRoomButton
                                 authToken={authToken}
                                 roomId={roomDetails._id}
@@ -233,44 +233,46 @@ export default function RoomDetails() {
                         </div>
                     }
                 </div>
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border">
+                <div className="relative rounded-2xl overflow-hidden border border-border/40 shadow-xl shadow-primary/5">
                     <img
                         src={roomDetails.room_image || "/images/room-default.jpg"}
-                        className="h-40 sm:h-52 md:h-64 w-full object-cover"
+                        className="h-44 sm:h-56 md:h-72 w-full object-cover"
+                        alt={roomDetails.room_name}
                     />
 
-                    <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
+                    {/* Gradient Overlay for Text Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
                     <div className="absolute inset-0 flex items-end">
-                        <div className="w-full p-4 sm:p-6 text-white space-y-1 sm:space-y-2">
+                        <div className="w-full p-6 sm:p-8 text-white space-y-2.5">
 
-                            <h1 className="text-lg sm:text-2xl md:text-3xl font-semibold leading-tight wrap-break-word">
+                            <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight wrap-break-word">
                                 {roomDetails.room_name}
                             </h1>
 
-                            <p className="text-xs sm:text-sm opacity-90 line-clamp-2 wrap-break-word">
+                            <p className="text-xs sm:text-sm md:text-base opacity-90 line-clamp-2 max-w-3xl leading-relaxed wrap-break-word">
                                 {roomDetails.room_tagline}
                             </p>
 
-                            <div className="flex items-center justify-between gap-3 text-[11px] sm:text-xs opacity-80">
-                                <div className="flex items-center gap-2 min-w-0" onClick={() =>
+                            <div className="flex items-center justify-between gap-4 pt-2 text-xs opacity-90 border-t border-white/10">
+                                <div className="flex items-center gap-2 min-w-0 cursor-pointer hover:text-primary transition-colors" onClick={() =>
                                     navigate(`/profile/${roomDetails.room_creator.handle}`)
                                 }>
-                                    <Avatar className="h-6 w-6 shrink-0 cursor-pointer">
+                                    <Avatar className="h-7 w-7 shrink-0 ring-2 ring-white/20">
                                         <AvatarImage
                                             src={roomDetails.room_creator.avatar || "/user.png"}
                                         />
-                                        <AvatarFallback>
+                                        <AvatarFallback className="bg-white/20 text-white text-[10px] font-bold">
                                             {roomDetails.room_creator.name.slice(0, 2).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
 
-                                    <span className="truncate">
+                                    <span className="truncate font-medium">
                                         By {roomDetails.room_creator.name}
                                     </span>
                                 </div>
 
-                                <div className="shrink-0">
+                                <div className="shrink-0 bg-white/10 hover:bg-white/15 px-3 py-1 rounded-full backdrop-blur-xs transition-colors">
                                     <RoomUsersComponent
                                         roomId={roomDetails._id}
                                         room_users={roomDetails.room_users}
@@ -297,6 +299,7 @@ export default function RoomDetails() {
                                 variant="destructive"
                                 onClick={handleLeaveRoom}
                                 disabled={loading === "leavingRoom"}
+                                className="cursor-pointer active:scale-95"
                             >
                                 {loading === "leavingRoom"
                                     ? "Leaving..."
@@ -307,14 +310,14 @@ export default function RoomDetails() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-base">Topics</CardTitle>
+                        <Card className="border-border/40 shadow-sm rounded-2xl bg-card/60 backdrop-blur-xs">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base font-semibold tracking-tight">Topics</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">
                                     {roomDetails.room_topics.map((topic, i) => (
-                                        <Badge key={i} variant="secondary">
+                                        <Badge key={i} variant="secondary" className="px-2.5 py-0.5 rounded-full font-medium">
                                             {topic}
                                         </Badge>
                                     ))}
@@ -324,11 +327,13 @@ export default function RoomDetails() {
                     </div>
 
                     <div className="md:col-span-2">
-                        <Discussions
-                            roomDetails={roomDetails}
-                            isMember={isMember}
-                            setIsMember={setIsMember}
-                        />
+                        <Card className="border-border/40 shadow-sm rounded-2xl p-0 overflow-hidden">
+                            <Discussions
+                                roomDetails={roomDetails}
+                                isMember={isMember}
+                                setIsMember={setIsMember}
+                            />
+                        </Card>
                     </div>
 
                 </div>

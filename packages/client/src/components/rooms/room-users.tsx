@@ -47,7 +47,7 @@ export default function RoomUsersComponent({
     const [blockingUserId, setBlockingUserId] = useState<string | null>(null)
     const [unblockingUserId, setUnblockingUserId] = useState<string | null>(null)
 
-    const visibleUsers = room_users.slice(0, 4)
+    const visibleUsers = room_users.slice(0, 5)
 
     const authHeaders = authToken
         ? { Authorization: `Bearer ${authToken}` }
@@ -64,7 +64,7 @@ export default function RoomUsersComponent({
         try {
             await axiosInstance.delete(`/rooms/remove-user/${roomId}`, {
                 headers: authHeaders,
-                data: { userId }
+                data: { userToRemoveId: userId }
             })
 
             updateRoom({
@@ -146,11 +146,13 @@ export default function RoomUsersComponent({
                         </div>
                     </TooltipProvider>
 
-                    <DialogTrigger asChild>
-                        <button className="h-8 w-8 flex items-center justify-center rounded-full border bg-muted hover:bg-muted/70 transition">
-                            <Users className="h-4 w-4" />
-                        </button>
-                    </DialogTrigger>
+                    {room_users.length >= 5 && (
+                        <DialogTrigger asChild>
+                            <button className="h-8 w-8 flex items-center justify-center rounded-full border bg-muted hover:bg-muted/70 transition">
+                                <Users className="h-4 w-4" />
+                            </button>
+                        </DialogTrigger>
+                    )}
                 </div>
 
                 <DialogContent className="max-w-lg">
