@@ -16,6 +16,7 @@ import ProfileAvatar from "@/components/profile/profile-avatar.component"
 import EditProfileComponent from "@/components/profile/edit-profile.component"
 import FollowUnfollowComponet from "@/components/profile/follow-unfollow.component"
 import DeleteProfileComponent from "@/components/profile/delete-profile.component"
+import VerificationWidget from "@/components/profile/verification-widget.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -141,6 +142,12 @@ export default function ProfilePage() {
                 {/* Right section */}
                 <Card className="md:col-span-2">
                     <CardContent className="p-6 space-y-5">
+                        {isOwnProfile && profile && !profile.verified && (
+                            <VerificationWidget
+                                email={profile.email}
+                                onVerified={getUsrProfile}
+                            />
+                        )}
                         {
                             isEditing
                                 ? <EditProfileComponent

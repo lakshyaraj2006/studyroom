@@ -346,4 +346,42 @@ const forgotPasswordReset = async (email: string, code: string, password: string
     }
 }
 
-export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode };
+const changeEmail = async (userId: string, newEmail: string) => {
+    if (!newEmail) {
+        throw new ApiError(400, "New email is required!");
+    }
+
+    const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+    if (!emailRegex.test(newEmail)) {
+        throw new ApiError(400, "Invalid email format!");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new ApiError(404, "User not found!");
+    }
+
+    // Check if new email is already taken
+    const existing = await User.findOne({ email: newEmail });
+    if (existing) {
+        throw new ApiError(400, "Email is already in use!");
+    }
+
+    // Generate new verification code
+    const verifyCode = generateVerificationCode();
+    const verifyCodeExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000);
+
+    user.email = newEmail;
+    user.verifyCode = verifyCode;
+    user.verifyCodeExpiry = verifyCodeExpiry;
+    user.verified = false;
+
+    await user.save();
+
+    // Send the new verification code
+    await sendVerificationEmail(user.username, newEmail, verifyCode);
+
+    return true;
+};
+
+export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail };
