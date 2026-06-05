@@ -83,6 +83,7 @@ const getRooms = async (filter?: string, userId?: string) => {
                             _id: 1,
                             name: 1,
                             username: 1,
+                            handle: 1,
                             avatar: 1
                         }
                     }
@@ -144,6 +145,7 @@ const getRoom = async (roomId: string, userId?: string) => {
                             _id: 1,
                             name: 1,
                             username: 1,
+                            handle: 1,
                             avatar: 1,
                             email: 1
                         }

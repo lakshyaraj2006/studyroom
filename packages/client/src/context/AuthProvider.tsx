@@ -8,12 +8,12 @@ export interface AuthContextType {
     authToken: string | null;
     setAuthToken: React.Dispatch<React.SetStateAction<string | null>>;
 
-    usrInfo: {id: string, username: string, avatar: string | undefined, handle: string} | null;
-    setUsrInfo: React.Dispatch<React.SetStateAction<{id: string, username: string, avatar: string | undefined, handle: string} | null>>
+    usrInfo: { id: string, username: string, avatar: string | undefined, handle: string } | null;
+    setUsrInfo: React.Dispatch<React.SetStateAction<{ id: string, username: string, avatar: string | undefined, handle: string } | null>>
 
     signup: (credentials: SignUpUserCredentials) => Promise<ServerResponse<null>>;
-    signin: (credentials: SignInUserCredentials) => Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined }>>;
-    verifyEmail: (email: string, code: string) => Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined }>>;
+    signin: (credentials: SignInUserCredentials) => Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>>;
+    verifyEmail: (email: string, code: string) => Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>>;
     resendCode: (email: string) => Promise<ServerResponse<null>>;
     forgotPassword: (email: string) => Promise<ServerResponse<null>>;
     forgotPasswordReset: (email: string, code: string, password: string, cpassword: string) => Promise<ServerResponse<null>>;
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: React.PropsWithChildren) => {
     const [authToken, setAuthToken] = useState<string | null>(null);
-    const [usrInfo, setUsrInfo] = useState<{id: string, username: string, avatar: string | undefined, handle: string} | null>(null);
+    const [usrInfo, setUsrInfo] = useState<{ id: string, username: string, avatar: string | undefined, handle: string } | null>(null);
 
     const signup = async (_credentials: SignUpUserCredentials): Promise<ServerResponse<null>> => {
         const response = await axiosInstance.post<ServerResponse<null>>('/users/create', _credentials, {
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         return response.data;
     };
 
-    const signin = async (_credentials: SignInUserCredentials): Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined }>> => {
+    const signin = async (_credentials: SignInUserCredentials): Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>> => {
         const response = await axiosInstance.post<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>>('/users/login', _credentials, {
             headers: {
                 'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         return response.data;
     };
 
-    const verifyEmail = async (_email: string, _code: string): Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined }>> => {
+    const verifyEmail = async (_email: string, _code: string): Promise<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>> => {
         const response = await axiosInstance.post<ServerResponse<{ accessToken: string, id: string, username: string, avatar: string | undefined, handle: string }>>('/users/verify-email', { email: _email, code: _code }, {
             headers: {
                 'Content-Type': 'application/json'

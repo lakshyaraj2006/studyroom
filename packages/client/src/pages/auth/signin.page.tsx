@@ -29,7 +29,7 @@ export default function SignIn() {
         setLoading(true);
 
         try {
-            const { success, message, data: { accessToken, id, username, avatar } } = await signin(credentials);
+            const { success, message, data: { accessToken, id, username, avatar, handle } } = await signin(credentials);
             if (success) {
                 toast.success(message, { duration: 2000 });
                 setCredentials({
@@ -39,7 +39,7 @@ export default function SignIn() {
 
                 setTimeout(() => {
                     setAuthToken(accessToken);
-                    setUsrInfo({ id, username, avatar });
+                    setUsrInfo({ id, username, avatar, handle });
                 }, 2000);
             } else {
                 toast.error(message, { duration: 2000 });
@@ -57,20 +57,42 @@ export default function SignIn() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center px-4">
-            <Card className="w-full max-w-sm sm:max-w-md">
-                <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-center">SignIn to your account</CardTitle>
+        <div className="min-h-screen relative flex flex-col items-center justify-center px-4 bg-background transition-colors duration-300 overflow-hidden">
+            {/* Background Glow Decors */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/4 left-1/3 w-[150px] h-[150px] bg-indigo-500/5 rounded-full blur-[60px] pointer-events-none" />
+
+            <Card className="w-full max-w-sm sm:max-w-md border border-border/40 bg-card/70 backdrop-blur-md shadow-xl rounded-2xl p-2 z-10 transition-colors duration-300">
+                <CardHeader className="space-y-1 pb-4">
+                    <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                        Welcome Back
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground text-center">
+                        Sign in to your StudyRoom account to continue
+                    </p>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent className="space-y-4">
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label htmlFor="identifier">Identifier</label>
-                            <Input type="text" name="identifier" id="identifier" placeholder="Username or Email" onChange={handleChange} />
+                        <div className="space-y-1.5">
+                            <label htmlFor="identifier" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                Identifier
+                            </label>
+                            <Input 
+                                type="text" 
+                                name="identifier" 
+                                id="identifier" 
+                                placeholder="Username or Email" 
+                                onChange={handleChange} 
+                                className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all duration-200"
+                            />
                         </div>
-                        <div>
-                            <label htmlFor="password">Password</label>
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between items-center">
+                                <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Password
+                                </label>
+                            </div>
                             <div className="relative">
                                 <Input
                                     type={showPassword ? "text" : "password"}
@@ -78,30 +100,35 @@ export default function SignIn() {
                                     id="password"
                                     placeholder="Password"
                                     onChange={handleChange}
+                                    className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all duration-200 pr-10"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
                         </div>
-                        <Button type="submit" className="w-full flex items-center gap-2 cursor-pointer" disabled={loading}>
+                        <Button 
+                            type="submit" 
+                            className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300" 
+                            disabled={loading}
+                        >
                             {
                                 loading ? <><Spinner /> Loading...</>
-                                    : <><LogInIcon /> Sign In</>
+                                    : <><LogInIcon size={16} /> Sign In</>
                             }
                         </Button>
                     </form>
 
-                    <div className="flex gap-8 w-full items-center justify-center mt-6">
-                        <Link to="/auth/forgot-password" className="text-sm text-center flex gap-2 items-center hover:underline">
-                            <HelpCircleIcon size={16} /> Forgot Password
+                    <div className="flex gap-6 w-full items-center justify-between mt-6 pt-4 border-t border-border/40 text-xs">
+                        <Link to="/auth/forgot-password" className="text-muted-foreground hover:text-primary transition-colors flex gap-1.5 items-center">
+                            <HelpCircleIcon size={14} /> Forgot Password?
                         </Link>
-                        <Link to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
-                            <UserPlus2Icon size={16} /> Sign Up
+                        <Link to="/auth/signup" className="text-muted-foreground hover:text-primary transition-colors flex gap-1.5 items-center font-medium">
+                            <UserPlus2Icon size={14} /> Create Account
                         </Link>
                     </div>
                 </CardContent>

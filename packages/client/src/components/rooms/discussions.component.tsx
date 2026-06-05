@@ -198,29 +198,29 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
     const isRoomCreator = usrInfo?.id === roomDetails.room_creator._id;
 
     return (
-        <Card className="rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[600px] overflow-hidden bg-white">
-            <CardHeader className="border-b border-slate-100 py-4">
-                <CardTitle className="text-lg font-semibold text-slate-800">
+        <Card className="rounded-2xl shadow-sm border border-border/40 flex flex-col h-[600px] overflow-hidden bg-card">
+            <CardHeader className="border-b border-border/40 py-4">
+                <CardTitle className="text-lg font-semibold text-foreground">
                     Discussions
                 </CardTitle>
             </CardHeader>
 
-            <CardContent className="flex-1 flex flex-col justify-between p-4 overflow-hidden bg-slate-50/30">
+            <CardContent className="flex-1 flex flex-col justify-between p-4 overflow-hidden bg-muted/10">
                 {/* Scrollable message container */}
                 <div
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto pr-2 space-y-4 mb-4 scrollbar-thin scrollbar-thumb-slate-200"
+                    className="flex-1 overflow-y-auto pr-2 space-y-4 mb-4 scrollbar-thin scrollbar-thumb-border"
                 >
                     {fetching ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                             <Loader2Icon className="animate-spin h-8 w-8 mb-2" />
                             <p className="text-sm">Fetching discussions...</p>
                         </div>
                     ) : discussions.length === 0 ? (
-                        <div className="text-center py-20 bg-white border border-slate-100 rounded-xl p-6 shadow-xs">
-                            <p className="text-sm text-slate-500 font-medium">No discussions yet</p>
+                        <div className="text-center py-20 bg-card border border-border/40 rounded-xl p-6 shadow-xs">
+                            <p className="text-sm text-muted-foreground font-medium">No discussions yet</p>
                             {!isMember && !isBlockedLocal && (
-                                <p className="text-xs text-slate-400 mt-2">
+                                <p className="text-xs text-muted-foreground/80 mt-2">
                                     Join this room to start participating.
                                 </p>
                             )}
@@ -240,13 +240,13 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
                 </div>
 
                 {/* Input area or Join action */}
-                <div className="border-t border-slate-100 pt-4 bg-white -mx-4 -mb-4 p-4 shadow-inner">
+                <div className="border-t border-border/40 pt-4 bg-card -mx-4 -mb-4 p-4 shadow-inner">
                     {isBlockedLocal ? (
-                        <div className="bg-red-50 border border-red-200/60 rounded-xl p-3.5 text-center flex flex-col items-center gap-1 shadow-2xs">
-                            <p className="text-xs font-bold text-red-800">
+                        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3.5 text-center flex flex-col items-center gap-1 shadow-2xs">
+                            <p className="text-xs font-bold text-destructive">
                                 You have been blocked from this room
                             </p>
-                            <p className="text-[11px] text-red-600/90 font-medium">
+                            <p className="text-[11px] text-destructive/80 font-medium">
                                 You can view conversations but are not permitted to participate.
                             </p>
                         </div>
@@ -254,11 +254,11 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
                         <DiscussionInput onSend={handleSendMessage} />
                     ) : (
                         <div className="flex flex-col items-center gap-3 py-2">
-                            <p className="text-xs text-slate-500 text-center font-medium">
+                            <p className="text-xs text-muted-foreground text-center font-medium">
                                 You are viewing this room as a guest. Join to send messages.
                             </p>
                             <Button
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer rounded-xl h-11"
+                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer rounded-xl h-11"
                                 onClick={handleJoinRoom}
                                 disabled={joining}
                             >
