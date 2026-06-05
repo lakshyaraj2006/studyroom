@@ -48,15 +48,6 @@ export const initSocket = (server: HttpServer) => {
 
                 const userId = socket.data.userId;
 
-                // Check if user is blocked
-                if (userId) {
-                    const isBlocked = room.blocked_users?.some((id) => id.toString() === userId);
-                    if (isBlocked) {
-                        if (callback) callback({ success: false, message: "You are blocked from this room" });
-                        return;
-                    }
-                }
-
                 // Check private room access
                 if (room.access_type === AccessType.PRIVATE) {
                     if (!userId) {
