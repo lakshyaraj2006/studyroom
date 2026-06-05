@@ -3,6 +3,11 @@ import { asyncHandler } from "@/shared/utils/AsyncHandler";
 import { ApiResponse } from "@/shared/utils/ApiResponse";
 import { ApiError } from "@/core/errors/ApiError";
 import { discussionService } from "./discussion.service";
+import {
+    broadcastDiscussionCreated,
+    broadcastDiscussionUpdated,
+    broadcastDiscussionDeleted
+} from "./discussion.socket";
 
 const createDiscussion = asyncHandler(async (req: Request, res: Response) => {
     const { roomId, content } = req.body;
@@ -13,6 +18,10 @@ const createDiscussion = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const result = await discussionService.createDiscussion(userId, roomId, content);
+
+    if (result) {
+        broadcastDiscussionCreated(roomId, result);
+    }
 
     return res
         .status(201)
@@ -45,6 +54,10 @@ const updateDiscussion = asyncHandler(async (req: Request, res: Response) => {
 
     const result = await discussionService.updateDiscussion(userId, discussionId, content);
 
+    if (result) {
+        broadcastDiscussionUpdated(result.room.toString(), result);
+    }
+
     return res
         .status(200)
         .json(new ApiResponse(200, result, "Discussion updated successfully"));
@@ -54,7 +67,11 @@ const deleteDiscussion = asyncHandler(async (req: Request, res: Response) => {
     const { discussionId } = req.params;
     const userId = req.user as string;
 
-    await discussionService.deleteDiscussion(userId, discussionId);
+    const roomId = await discussionService.deleteDiscussion(userId, discussionId);
+
+    if (roomId) {
+        broadcastDiscussionDeleted(roomId, discussionId);
+    }
 
     return res
         .status(200)

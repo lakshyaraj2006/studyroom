@@ -176,7 +176,7 @@ const deleteDiscussion = async (userId: string, discussionId: string) => {
     discussion.deletedAt = new Date();
     await discussion.save();
 
-    return true;
+    return discussion.room.toString();
 };
 
 export const discussionService = {
