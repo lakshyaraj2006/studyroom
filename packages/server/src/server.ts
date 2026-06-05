@@ -7,6 +7,8 @@ import cors from "cors";
 import { profileRouter } from "@/modules/profile/profile.route";
 import { errorHandler } from "@/core/middlewares";
 import { roomRouter } from "@/modules/rooms/room.route";
+import { discussionRouter } from "@/modules/discussions/discussion.route";
+import { initSocket } from "@/modules/discussions/discussion.socket";
 
 import dns from "node:dns/promises";
 dns.setServers(['1.1.1.1', '8.8.8.8']);
@@ -28,12 +30,15 @@ connectDB()
     app.use("/api/v1/users", userRouter);
     app.use("/api/v1/profile", profileRouter);
     app.use("/api/v1/rooms", roomRouter);
+    app.use("/api/v1/discussions", discussionRouter);
     
     app.use(errorHandler);
 
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
         console.log(`StudyRoom server listening on port ${port}`);
-    })
+    });
+
+    initSocket(server);
 })
 .catch((error) => {
     console.log(error);

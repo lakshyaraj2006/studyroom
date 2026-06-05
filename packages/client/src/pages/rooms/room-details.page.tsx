@@ -3,6 +3,7 @@ import { type ServerResponse } from "@/interfaces/server-response"
 import axiosInstance from "@/lib/api"
 import { useEffect, useState, useCallback } from "react"
 import { useParams, Navigate, Link, useNavigate } from "react-router-dom"
+import { io } from "socket.io-client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -81,6 +82,89 @@ export default function RoomDetails() {
             fetchRoomDetails()
         }
     }, [fetchRoomDetails, roomId, authToken])
+
+    useEffect(() => {
+        if (!roomId) return;
+        if (!isMember && roomDetails?.access_type === "private") return;
+
+        const socketUrl = import.meta.env.VITE_API_BASE_URL.replace("/api/v1", "");
+        const socket = io(socketUrl, {
+            auth: {
+                token: authToken
+            },
+            transports: ["websocket"]
+        });
+
+        socket.on("connect", () => {
+            socket.emit("join_room", roomId);
+        });
+
+        socket.on("room:user_joined", (user: any) => {
+            if (user._id === usrInfo?.id) {
+                setIsMember(true);
+            }
+            setRoomDetails((prev) => {
+                if (!prev) return null;
+                if (prev.room_users.some((u) => u._id === user._id)) return prev;
+                return {
+                    ...prev,
+                    room_users: [...prev.room_users, user]
+                };
+            });
+        });
+
+        socket.on("room:user_left", (userId: string) => {
+            if (userId === usrInfo?.id) {
+                setIsMember(false);
+            }
+            setRoomDetails((prev) => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    room_users: prev.room_users.filter((u) => u._id !== userId)
+                };
+            });
+        });
+
+        socket.on("room:user_blocked", (user: any) => {
+            if (user._id === usrInfo?.id) {
+                setIsMember(false);
+            }
+            setRoomDetails((prev) => {
+                if (!prev) return null;
+                const isAlreadyBlocked = prev.blocked_users?.some((u) => u._id === user._id);
+                return {
+                    ...prev,
+                    room_users: prev.room_users.filter((u) => u._id !== user._id),
+                    blocked_users: isAlreadyBlocked
+                        ? prev.blocked_users
+                        : [...(prev.blocked_users || []), user]
+                };
+            });
+        });
+
+        socket.on("room:user_unblocked", (user: any) => {
+            if (user._id === usrInfo?.id) {
+                setIsMember(true);
+            }
+            setRoomDetails((prev) => {
+                if (!prev) return null;
+                const isAlreadyMember = prev.room_users.some((u) => u._id === user._id);
+                return {
+                    ...prev,
+                    blocked_users: prev.blocked_users?.filter((u) => u._id !== user._id) || [],
+                    room_users: isAlreadyMember
+                        ? prev.room_users
+                        : [...prev.room_users, user]
+                };
+            });
+        });
+
+        return () => {
+            socket.emit("leave_room", roomId);
+            socket.disconnect();
+        };
+    }, [roomId, authToken, isMember, roomDetails?.access_type]);
 
     const handleLeaveRoom = async () => {
         if (!authToken) return
