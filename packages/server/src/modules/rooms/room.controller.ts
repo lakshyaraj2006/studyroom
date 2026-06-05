@@ -3,6 +3,14 @@ import { asyncHandler } from "@/shared/utils/AsyncHandler";
 import { roomService } from "./room.service";
 import { ApiResponse } from "@/shared/utils/ApiResponse";
 import { ApiError } from "@/core/errors/ApiError";
+import { User } from "../user/user.model";
+import {
+    sendBlockNotification,
+    broadcastUserJoined,
+    broadcastUserLeft,
+    broadcastUserBlocked,
+    broadcastUserUnblocked
+} from "../discussions/discussion.socket";
 
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {
@@ -95,6 +103,11 @@ const acceptInvite = asyncHandler(
 
         const result = await roomService.acceptInvite(req.user as string, req.params.roomId, req.params.token);
 
+        const user = await User.findById(req.user).select("_id name username handle avatar");
+        if (user) {
+            broadcastUserJoined(roomId, user);
+        }
+
         return res
             .status(200)
             .json(new ApiResponse(200, null, "You have joined " + result + " room"));
@@ -115,7 +128,11 @@ const rejectInvite = asyncHandler(
 
 const removeUser = asyncHandler(
     async (req: Request, res: Response) => {
-        const result = await roomService.removeUser(req.user as string, req.body.userToRemoveId, req.params.roomId);
+        const { roomId } = req.params;
+        const { userToRemoveId } = req.body;
+        const result = await roomService.removeUser(req.user as string, userToRemoveId, roomId);
+
+        broadcastUserLeft(roomId, userToRemoveId);
 
         return res
             .status(200)
@@ -125,7 +142,16 @@ const removeUser = asyncHandler(
 
 const blockUser = asyncHandler(
     async (req: Request, res: Response) => {
-        const result = await roomService.blockUser(req.user as string, req.body.userToBlockId, req.params.roomId, req.body.reason);
+        const { userToBlockId, reason } = req.body;
+        const { roomId } = req.params;
+        const result = await roomService.blockUser(req.user as string, userToBlockId, roomId, reason);
+
+        sendBlockNotification(userToBlockId, roomId);
+
+        const user = await User.findById(userToBlockId).select("_id name username handle avatar");
+        if (user) {
+            broadcastUserBlocked(roomId, user);
+        }
 
         return res
             .status(200)
@@ -148,11 +174,18 @@ const getBlockedUsers = asyncHandler(
 
 const unblockUser = asyncHandler(
     async (req: Request, res: Response) => {
+        const { roomId } = req.params;
+        const { blockedUserId } = req.body;
 
-        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
-        if (!req.body.blockedUserId) throw new ApiError(400, "Blocked User Id is required!");
+        if (!roomId) throw new ApiError(400, "Room Id is required!");
+        if (!blockedUserId) throw new ApiError(400, "Blocked User Id is required!");
 
-        const result = await roomService.unblockUser(req.user as string, req.body.blockedUserId as string, req.params.roomId as string);
+        const result = await roomService.unblockUser(req.user as string, blockedUserId as string, roomId as string);
+
+        const user = await User.findById(blockedUserId).select("_id name username handle avatar");
+        if (user) {
+            broadcastUserUnblocked(roomId, user);
+        }
 
         return res
             .status(200)
@@ -189,10 +222,16 @@ const revokeInvitation = asyncHandler(
 
 const joinRoom = asyncHandler(
     async (req: Request, res: Response) => {
+        const { roomId } = req.params;
 
-        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+        if (!roomId) throw new ApiError(400, "Room Id is required!");
 
-        const { roomName } = await roomService.joinRoom(req.user as string, req.params.roomId as string);
+        const { roomName } = await roomService.joinRoom(req.user as string, roomId as string);
+
+        const user = await User.findById(req.user).select("_id name username handle avatar");
+        if (user) {
+            broadcastUserJoined(roomId, user);
+        }
 
         return res
             .status(200)
@@ -202,10 +241,13 @@ const joinRoom = asyncHandler(
 
 const leaveRoom = asyncHandler(
     async (req: Request, res: Response) => {
+        const { roomId } = req.params;
 
-        if (!req.params.roomId) throw new ApiError(400, "Room Id is required!");
+        if (!roomId) throw new ApiError(400, "Room Id is required!");
 
-        const { roomName } = await roomService.leaveRoom(req.user as string, req.params.roomId as string);
+        const { roomName } = await roomService.leaveRoom(req.user as string, roomId as string);
+
+        broadcastUserLeft(roomId, req.user as string);
 
         return res
             .status(200)

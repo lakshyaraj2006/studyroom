@@ -31,7 +31,10 @@ export const initSocket = (server: HttpServer) => {
     });
 
     io.on("connection", (socket) => {
-        console.log(`Socket connected: ${socket.id}`);
+        const userId = socket.data.userId;
+        if (userId) {
+            socket.join(`user:${userId}`);
+        }
 
         socket.on("join_room", async (roomId: string, callback?: (response: { success: boolean; message?: string }) => void) => {
             try {
@@ -64,7 +67,6 @@ export const initSocket = (server: HttpServer) => {
 
                 const roomChannel = `discussion:room:${roomId}`;
                 socket.join(roomChannel);
-                console.log(`Socket ${socket.id} joined room channel ${roomChannel}`);
                 if (callback) callback({ success: true });
             } catch (err: any) {
                 console.error(`Error in join_room: ${err.message}`);
@@ -75,12 +77,9 @@ export const initSocket = (server: HttpServer) => {
         socket.on("leave_room", (roomId: string) => {
             const roomChannel = `discussion:room:${roomId}`;
             socket.leave(roomChannel);
-            console.log(`Socket ${socket.id} left room channel ${roomChannel}`);
         });
 
-        socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
-        });
+        socket.on("disconnect", () => { });
     });
 
     return io;
@@ -110,3 +109,34 @@ export const broadcastDiscussionDeleted = (roomId: string, discussionId: string)
         io.to(`discussion:room:${roomId}`).emit("discussion:deleted", discussionId);
     }
 };
+
+export const sendBlockNotification = (userToBlockId: string, roomId: string) => {
+    if (io) {
+        io.to(`user:${userToBlockId}`).emit("room:blocked", { roomId });
+    }
+};
+
+export const broadcastUserJoined = (roomId: string, user: any) => {
+    if (io) {
+        io.to(`discussion:room:${roomId}`).emit("room:user_joined", user);
+    }
+};
+
+export const broadcastUserLeft = (roomId: string, userId: string) => {
+    if (io) {
+        io.to(`discussion:room:${roomId}`).emit("room:user_left", userId);
+    }
+};
+
+export const broadcastUserBlocked = (roomId: string, user: any) => {
+    if (io) {
+        io.to(`discussion:room:${roomId}`).emit("room:user_blocked", user);
+    }
+};
+
+export const broadcastUserUnblocked = (roomId: string, user: any) => {
+    if (io) {
+        io.to(`discussion:room:${roomId}`).emit("room:user_unblocked", user);
+    }
+};
+

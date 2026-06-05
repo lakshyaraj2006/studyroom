@@ -27,6 +27,10 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
     const [fetching, setFetching] = useState(false);
     const [joining, setJoining] = useState(false);
 
+    const [isBlockedLocal, setIsBlockedLocal] = useState(() =>
+        roomDetails.blocked_users?.some((user) => user._id === usrInfo?.id) || false
+    );
+
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const fetchDiscussions = async () => {
@@ -47,6 +51,12 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
             setFetching(false);
         }
     };
+
+    useEffect(() => {
+        setIsBlockedLocal(
+            roomDetails.blocked_users?.some((user) => user._id === usrInfo?.id) || false
+        );
+    }, [roomDetails, usrInfo]);
 
     useEffect(() => {
         if (roomDetails._id && (isMember || roomDetails.access_type === "public")) {
@@ -91,6 +101,13 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
 
         socket.on("discussion:deleted", (deletedId: string) => {
             setDiscussions((prev) => prev.filter((d) => d._id !== deletedId));
+        });
+
+        socket.on("room:blocked", ({ roomId }: { roomId: string }) => {
+            if (roomId === roomDetails._id) {
+                setIsBlockedLocal(true);
+                setIsMember(false);
+            }
         });
 
         return () => {
@@ -179,7 +196,6 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
     };
 
     const isRoomCreator = usrInfo?.id === roomDetails.room_creator._id;
-    const isBlocked = roomDetails.blocked_users?.some((user) => user._id === usrInfo?.id);
 
     return (
         <Card className="rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[600px] overflow-hidden bg-white">
@@ -203,7 +219,7 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
                     ) : discussions.length === 0 ? (
                         <div className="text-center py-20 bg-white border border-slate-100 rounded-xl p-6 shadow-xs">
                             <p className="text-sm text-slate-500 font-medium">No discussions yet</p>
-                            {!isMember && !isBlocked && (
+                            {!isMember && !isBlockedLocal && (
                                 <p className="text-xs text-slate-400 mt-2">
                                     Join this room to start participating.
                                 </p>
@@ -225,7 +241,7 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
 
                 {/* Input area or Join action */}
                 <div className="border-t border-slate-100 pt-4 bg-white -mx-4 -mb-4 p-4 shadow-inner">
-                    {isBlocked ? (
+                    {isBlockedLocal ? (
                         <div className="bg-red-50 border border-red-200/60 rounded-xl p-3.5 text-center flex flex-col items-center gap-1 shadow-2xs">
                             <p className="text-xs font-bold text-red-800">
                                 You have been blocked from this room
