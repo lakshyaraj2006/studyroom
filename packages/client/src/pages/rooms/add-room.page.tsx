@@ -1,8 +1,14 @@
 import RoomForm from "@/components/rooms/room-form.component"
+import SEO from "@/components/seo.component"
 
 export default function AddRoomPage() {
     return (
         <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+            <SEO
+                title="Create Study Room"
+                description="Create a new study room on StudyRoom, select tags, set privacy controls, and invite peers to study together."
+                keywords="create study room, start study group, study room tags, student collaboration"
+            />
 
             <div className="container max-w-6xl mx-auto px-4 py-12">
 

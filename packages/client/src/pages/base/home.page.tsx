@@ -2,12 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, MapPin, CalendarCheck, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import SEO from "@/components/seo.component";
 
 export default function Home() {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-col min-h-screen overflow-hidden">
+      <SEO
+        title="Find Your Perfect Study Space"
+        description="Discover quiet, comfortable study rooms where you can host discussions, focus intensely, and boost your productivity without distractions."
+        keywords="study rooms, study spaces, book study room, collaborative learning, productivity"
+      />
 
       {/* Hero Section with Modern Background Grid and Glows */}
       <section className="relative flex flex-col items-center justify-center text-center px-6 py-24 md:py-32 bg-background transition-colors duration-300">
@@ -34,6 +40,7 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button
+              id="hero-get-started-btn"
               size="lg"
               className="w-full sm:w-auto flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300"
               onClick={() => navigate("/rooms")}
@@ -42,6 +49,7 @@ export default function Home() {
             </Button>
 
             <Button
+              id="hero-learn-more-btn"
               size="lg"
               variant="outline"
               className="w-full sm:w-auto cursor-pointer border-border/60 hover:bg-muted/50 hover:border-primary/30 transition-all duration-300"
@@ -121,6 +129,7 @@ export default function Home() {
 
               <div className="pt-4">
                 <Button
+                  id="cta-browse-rooms-btn"
                   size="lg"
                   variant="secondary"
                   className="w-full sm:w-auto cursor-pointer flex items-center justify-center gap-2 mx-auto bg-white text-indigo-700 hover:bg-slate-50 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 font-bold"

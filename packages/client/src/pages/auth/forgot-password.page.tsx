@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "../../components/ui/input";
 import { ArrowLeftIcon, Eye, EyeOff, LockIcon, LogInIcon, MailIcon, RotateCwIcon, UserPlus2Icon } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import { Card, CardHeader, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
 import PasswordStrength from "@/components/password-strength.component";
 import { Link, useNavigate } from "react-router-dom";
+import SEO from "@/components/seo.component";
 
 export default function ForgotPassword() {
     const { forgotPassword, forgotPasswordReset } = useAuth();
@@ -93,9 +94,14 @@ export default function ForgotPassword() {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
+            <SEO
+                title="Reset Password"
+                description="Recover your StudyRoom account password by verifying your email and setting a new secure password."
+                keywords="forgot password, reset password, recover account, studyroom"
+            />
             <Card className="w-full max-w-sm sm:max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-center">Forgot Password</CardTitle>
+                    <h1 className="text-lg font-semibold text-center text-foreground leading-none font-semibold">Forgot Password</h1>
                 </CardHeader>
 
                 <CardContent>
@@ -114,6 +120,7 @@ export default function ForgotPassword() {
                             </div>
 
                             <Button
+                                id="send-code-btn"
                                 type="submit"
                                 className="w-full cursor-pointer"
                                 disabled={loadingAction === "enter-email"}
@@ -125,7 +132,7 @@ export default function ForgotPassword() {
                             </Button>
 
                             {(resetData.email || loadingAction === "enter-email") && (
-                                <p className="text-sm text-center underline mt-1 cursor-pointer" onClick={() => setMode("reset-password")}>
+                                <p id="already-have-code-btn" className="text-sm text-center underline mt-1 cursor-pointer" onClick={() => setMode("reset-password")}>
                                     Already have a code?
                                 </p>
                             )}
@@ -167,6 +174,7 @@ export default function ForgotPassword() {
                                         onChange={handleChange}
                                     />
                                     <button
+                                        id="password-confirm-toggle-btn"
                                         type="button"
                                         onClick={() => setShowConfirmPassword(v => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -178,6 +186,7 @@ export default function ForgotPassword() {
 
                             <div className="flex w-full items-center gap-2">
                                 <Button
+                                    id="resend-code-btn"
                                     type="button"
                                     className="w-1/2 flex items-center gap-2 cursor-pointer"
                                     onClick={handleResendCode}
@@ -189,6 +198,7 @@ export default function ForgotPassword() {
                                     }
                                 </Button>
                                 <Button
+                                    id="reset-password-submit-btn"
                                     type="submit"
                                     className="flex-1 cursor-pointer"
                                     disabled={loadingAction === "reset-password"}
@@ -201,6 +211,7 @@ export default function ForgotPassword() {
                             </div>
 
                             <Button
+                                id="back-to-email-btn"
                                 type="button"
                                 variant="outline"
                                 className="w-full cursor-pointer mt-2"
@@ -213,10 +224,10 @@ export default function ForgotPassword() {
                     )}
 
                     <div className="flex gap-8 w-full items-center justify-center mt-6">
-                        <Link to="/auth/signin" className="text-sm text-center flex gap-2 items-center hover:underline">
+                        <Link id="signin-link" to="/auth/signin" className="text-sm text-center flex gap-2 items-center hover:underline">
                             <LogInIcon size={16} /> Sign In
                         </Link>
-                        <Link to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
+                        <Link id="signup-link" to="/auth/signup" className="text-sm text-center flex gap-2 items-center hover:underline">
                             <UserPlus2Icon size={16} /> Sign Up
                         </Link>
                     </div>

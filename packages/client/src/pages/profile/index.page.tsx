@@ -17,6 +17,7 @@ import EditProfileComponent from "@/components/profile/edit-profile.component"
 import FollowUnfollowComponet from "@/components/profile/follow-unfollow.component"
 import DeleteProfileComponent from "@/components/profile/delete-profile.component"
 import VerificationWidget from "@/components/profile/verification-widget.component"
+import SEO from "@/components/seo.component"
 
 export default function ProfilePage() {
     const { userHandle } = useParams();
@@ -88,6 +89,11 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-6xl mx-auto px-6 py-10">
+            <SEO
+                title={profile ? `${profile.name} (@${userHandle})` : "User Profile"}
+                description={profile ? (profile.bio || `View ${profile.name}'s profile on StudyRoom. Joined ${profile.joined_rooms?.length || 0} rooms.`) : "View user profile on StudyRoom."}
+                keywords={`profile, studyroom, ${profile?.name || ""}, ${profile?.username || ""}`}
+            />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
                 {/* Left section */}
@@ -101,7 +107,7 @@ export default function ProfilePage() {
                             setIsEditing={setIsEditing}
                         />
 
-                        <h2 className="mt-4 text-xl font-semibold">{profile?.name}</h2>
+                        <h1 className="mt-4 text-xl font-semibold">{profile?.name}</h1>
 
                         <div className="flex gap-6 mt-3 text-sm text-muted-foreground">
                             <span>
@@ -123,14 +129,14 @@ export default function ProfilePage() {
 
                         {authToken && isOwnProfile && !profile?.is_deleted && (
                             <div className="flex flex-col md:flex-row items-center gap-2 w-full mt-6">
-                                <Button variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
+                                <Button id="edit-profile-btn" variant={isEditing ? "destructive" : "default"} className="w-full md:w-1/2 flex items-center justify-center gap-2 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
                                     {
                                         isEditing
                                             ? <><XIcon className="w-4 h-4" /> Cancel</>
                                             : <><Edit2 className="w-4 h-4" /> Edit Profile</>
                                     }
                                 </Button>
-                                <Button variant="secondary" className="w-full md:flex-1 flex items-center justify-center gap-2 cursor-pointer" onClick={handleLogout}>
+                                <Button id="logout-btn" variant="secondary" className="w-full md:flex-1 flex items-center justify-center gap-2 cursor-pointer" onClick={handleLogout}>
                                     <LogOut className="w-4 h-4" />
                                     Logout
                                 </Button>

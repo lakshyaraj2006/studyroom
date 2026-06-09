@@ -11,6 +11,7 @@ import {
     SparklesIcon,
     ShieldAlertIcon
 } from "lucide-react";
+import SEO from "@/components/seo.component";
 
 type LoadingState =
     | "idle"
@@ -116,6 +117,11 @@ export default function EditRoom() {
 
     return (
         <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
+            <SEO
+                title={roomDetails ? `Edit ${roomDetails.room_name}` : "Edit Room"}
+                description="Modify your study room settings, description, tags, and privacy levels."
+                keywords="edit study room, update room details, study group settings"
+            />
             <div className="container max-w-6xl mx-auto px-4 py-12">
                 <div className="grid md:grid-cols-2 gap-10 items-center">
 

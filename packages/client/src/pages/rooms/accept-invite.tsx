@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import SEO from "@/components/seo.component";
 
 export default function AcceptRoomInvite() {
     const { roomId, inviteToken } = useParams();
@@ -73,6 +74,11 @@ export default function AcceptRoomInvite() {
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center px-6 transition-colors duration-300">
+            <SEO
+                title="Accept Invitation"
+                description="Accept invitation to join a study room on StudyRoom to start active learning and collaboration."
+                keywords="accept invitation, study room invite, join study group, studyroom"
+            />
             <div className="w-full max-w-md rounded-3xl border border-border/40 bg-card shadow-xl p-8">
                 <div className="flex flex-col items-center text-center space-y-6">
                     <div

@@ -4,6 +4,7 @@ import axiosInstance from "@/lib/api"
 import { useEffect, useState, useCallback } from "react"
 import { useParams, Navigate, Link, useNavigate } from "react-router-dom"
 import { io } from "socket.io-client"
+import SEO from "@/components/seo.component"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -219,12 +220,17 @@ export default function RoomDetails() {
 
     return (
         <div className="min-h-screen bg-background transition-colors duration-300">
+            <SEO
+                title={roomDetails ? roomDetails.room_name : "Room Details"}
+                description={roomDetails ? (roomDetails.room_tagline || `Join the study group ${roomDetails.room_name} on StudyRoom to collaborate and focus.`) : "View study room details on StudyRoom."}
+                keywords={roomDetails ? `study room, ${roomDetails.room_name}, ${roomDetails.room_topics.join(", ")}` : "study room, study group"}
+            />
             <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
                 <div className="flex items-center justify-end">
                     {
                         authToken && usrInfo?.id === roomDetails.room_creator._id &&
                         <div className="flex items-center gap-2">
-                            <Link to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit</Link>
+                            <Link id="edit-room-link" to={`/rooms/edit/${roomDetails._id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit</Link>
                             <DeleteRoomButton
                                 authToken={authToken}
                                 roomId={roomDetails._id}
@@ -296,6 +302,7 @@ export default function RoomDetails() {
                     roomDetails.room_creator._id !== usrInfo.id && (
                         <div className="flex justify-end">
                             <Button
+                                id="leave-room-btn"
                                 variant="destructive"
                                 onClick={handleLeaveRoom}
                                 disabled={loading === "leavingRoom"}

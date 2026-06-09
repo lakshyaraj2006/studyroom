@@ -3,13 +3,14 @@ import type { SignUpUserCredentials } from "@/interfaces/signup-user-credentials
 import { Input } from "../../components/ui/input";
 import PasswordStrength from "../../components/password-strength.component";
 import { Eye, EyeOff, LockIcon, LogInIcon, RotateCwIcon } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card";
+import { Card, CardHeader, CardContent } from "../../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
+import SEO from "@/components/seo.component";
 
 type LoadingAction = "signup" | "verify" | "resend" | null;
 
@@ -116,15 +117,21 @@ export default function SignUp() {
 
     return (
         <div className="min-h-screen relative flex flex-col items-center justify-center px-4 bg-background transition-colors duration-300 overflow-hidden">
+            <SEO
+                title={mode === "signup" ? "Create Account" : "Verify Account"}
+                description="Sign up for a StudyRoom account to discover, book, and enjoy collaborative quiet study rooms."
+                keywords="sign up, register, create account, studyroom, student registration"
+            />
+
             {/* Background Glow Decors */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute top-1/4 left-1/3 w-[150px] h-[150px] bg-indigo-500/5 rounded-full blur-[60px] pointer-events-none" />
 
             <Card className="w-full max-w-sm sm:max-w-md border border-border/40 bg-card/70 backdrop-blur-md shadow-xl rounded-2xl p-2 z-10 transition-colors duration-300">
                 <CardHeader className="space-y-1 pb-4">
-                    <CardTitle className="text-2xl font-bold text-center bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold text-center bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent leading-none font-semibold">
                         {mode === "signup" ? "Create Account" : "Verify Account"}
-                    </CardTitle>
+                    </h1>
                     <p className="text-xs text-muted-foreground text-center">
                         {mode === "signup" ? "Join StudyRoom to start collaborative studying" : "Enter the verification code sent to your email"}
                     </p>
@@ -171,6 +178,7 @@ export default function SignUp() {
                                         className="rounded-xl border-border/50 pr-10 focus-visible:ring-primary focus-visible:border-primary transition-all"
                                     />
                                     <button
+                                        id="password-confirm-toggle-btn"
                                         type="button"
                                         onClick={() => setShowConfirmPassword(v => !v)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -181,6 +189,7 @@ export default function SignUp() {
                             </div>
 
                             <Button
+                                id="signup-submit-btn"
                                 type="submit"
                                 className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300"
                                 disabled={loadingAction === "signup"}
@@ -210,6 +219,7 @@ export default function SignUp() {
 
                             <div className="flex w-full gap-3 pt-2">
                                 <Button
+                                    id="resend-code-btn"
                                     type="button"
                                     variant="outline"
                                     className="w-1/2 flex items-center justify-center gap-2 cursor-pointer rounded-xl border-border/50 hover:bg-muted"
@@ -223,6 +233,7 @@ export default function SignUp() {
                                 </Button>
 
                                 <Button
+                                    id="verify-submit-btn"
                                     type="submit"
                                     className="flex-1 flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md"
                                     disabled={loadingAction === "verify"}
@@ -237,7 +248,7 @@ export default function SignUp() {
                     )}
 
                     <div className="flex w-full items-center justify-center mt-6 pt-4 border-t border-border/40 text-xs">
-                        <Link to="/auth/signin" className="text-muted-foreground hover:text-primary transition-colors flex gap-1.5 items-center font-medium">
+                        <Link id="signin-link" to="/auth/signin" className="text-muted-foreground hover:text-primary transition-colors flex gap-1.5 items-center font-medium">
                             <LogInIcon size={14} /> Already have an account? Sign In
                         </Link>
                     </div>
