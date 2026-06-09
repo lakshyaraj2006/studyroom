@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import SEO from "@/components/seo.component";
 
 export default function RejectRoomInvite() {
     const { roomId, inviteToken } = useParams();
@@ -72,6 +73,11 @@ export default function RejectRoomInvite() {
 
     return (
         <div className="min-h-screen bg-background flex items-center justify-center px-6 transition-colors duration-300">
+            <SEO
+                title="Reject Invitation"
+                description="Decline study room invitation on StudyRoom."
+                keywords="reject invitation, decline invite, studyroom"
+            />
             <div className="w-full max-w-md rounded-3xl border border-border/40 bg-card shadow-xl p-8">
                 <div className="flex flex-col items-center text-center space-y-6">
                     <div

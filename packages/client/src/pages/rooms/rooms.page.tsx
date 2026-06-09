@@ -10,6 +10,7 @@ import type { ServerResponse } from "@/interfaces/server-response";
 
 import RoomCard from "@/components/rooms/room-card.component";
 import { buttonVariants } from "@/components/ui/button";
+import SEO from "@/components/seo.component";
 
 type RoomFilter = "all" | "created" | "joined";
 
@@ -102,6 +103,11 @@ const Rooms = () => {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8 space-y-8 animate-fade-in">
+      <SEO
+        title="Browse Study Rooms"
+        description="Browse active public study rooms or join/create study groups to collaborate with your colleagues and friends."
+        keywords="study rooms, study spaces, public study rooms, group learning, collaborative study"
+      />
       
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border/40 pb-6 gap-4">
@@ -116,6 +122,7 @@ const Rooms = () => {
 
         {authToken && (
           <Link 
+            id="create-room-link"
             to="/rooms/add" 
             className={cn(
               buttonVariants({ size: "default" }),
@@ -134,6 +141,7 @@ const Rooms = () => {
               const isSelected = activeFilter === value;
               return (
                 <button
+                  id={`filter-${value}-btn`}
                   key={value}
                   onClick={() => changeFilter(value)}
                   className={cn(
