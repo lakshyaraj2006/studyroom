@@ -8,6 +8,7 @@ import { profileRouter } from "@/modules/profile/profile.route";
 import { errorHandler } from "@/core/middlewares";
 import { roomRouter } from "@/modules/rooms/room.route";
 import { discussionRouter } from "@/modules/discussions/discussion.route";
+import { contactRouter } from "@/modules/contact/contact.route";
 import { initSocket } from "@/modules/discussions/discussion.socket";
 
 import dns from "node:dns/promises";
@@ -31,6 +32,7 @@ connectDB()
     app.use("/api/v1/profile", profileRouter);
     app.use("/api/v1/rooms", roomRouter);
     app.use("/api/v1/discussions", discussionRouter);
+    app.use("/api/v1/contact", contactRouter);
     
     app.use(errorHandler);
 
