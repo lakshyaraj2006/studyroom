@@ -24,7 +24,7 @@ const updateUserProfile = async (userId: string, userDetails: Pick<IUser, "name"
     let user = await User.findOne({ handle: userDetails.handle, _id: { $ne: userId } });
 
     if (user) {
-        throw new ApiError(400, "Handle is already in use")
+        throw new ApiError(409, "Handle is already in use");
     } else {
         user = await User.findByIdAndUpdate(userId,
             {
@@ -67,7 +67,7 @@ const deleteProfilePic = async (userId: string) => {
     if (!user) {
         throw new ApiError(404, "User not found")
     } else if (!user?.avatar) {
-        throw new ApiError(409, "User does not have a profile pic")
+        throw new ApiError(400, "User does not have a profile picture.");
     }
     else {
         const publicId = getCloudinaryPublicId(user?.avatar);
@@ -120,7 +120,7 @@ const unfollowUser = async (userId: string, userHandle: string) => {
   }).select("_id name handle");
 
   if (!targetUser) {
-    throw new ApiError(404, "You are not following this user");
+    throw new ApiError(400, "You are not following this user.");
   }
 
   await Promise.all([

@@ -14,7 +14,7 @@ const createUser = async (name: string, username: string, email: string, passwor
     } else {
         // validate username & email
         const usernameRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9]+$/;
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
 
         // check if username contains alphanumeric characters or not
         if (!usernameRegex.test(username)) {
@@ -27,12 +27,12 @@ const createUser = async (name: string, username: string, email: string, passwor
         else {
             // check if the user exists with the username or email
             let user = await User.findOne({
-                $or: [{ username }, { email }]
+                $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }]
             });
 
             // throw error if the user exists
             if (user) {
-                throw new ApiError(400, "Username or email already in use!");
+                throw new ApiError(409, "Username or email already in use!");
             }
             // check if password & confirm passwords match
             else if (password !== cpassword) {
@@ -62,7 +62,7 @@ const createUser = async (name: string, username: string, email: string, passwor
                     return true;
                 }
                 else {
-                    throw new ApiError(400, "Some error occurred!");
+                    throw new ApiError(500, "Failed to send verification email. Please try again later.");
                 }
             }
         }
@@ -75,14 +75,14 @@ const resendVerificationCode = async (email: string) => {
         throw new ApiError(400, "Email is required!");
     } else {
 
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
         // check for a valid email format
         if (!emailRegex.test(email)) {
             throw new ApiError(400, "Invalid email format!");
         }
 
         // find the user
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
 
         if (!user) {
             return true;
@@ -118,7 +118,7 @@ const verifyEmail = async (email: string, code: string) => {
         throw new ApiError(400, "All fields are required!");
     } else {
         // validate email
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
 
         // check if entered email is valid or not
         if (!emailRegex.test(email)) {
@@ -126,7 +126,7 @@ const verifyEmail = async (email: string, code: string) => {
         }
         else {
             // check if the user exists with the username or email
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ email: email.toLowerCase() });
 
             // throw error if the user exists
             if (!user) {
@@ -134,7 +134,7 @@ const verifyEmail = async (email: string, code: string) => {
             }
             else {
                 if (user.verified) {
-                    throw new ApiError(400, "User email already verified!")
+                    throw new ApiError(409, "Email is already verified!")
                 } else if (code != user.verifyCode) {
                     throw new ApiError(400, "Invalid verification code!");
                 } else if (new Date() > (user.verifyCodeExpiry as Date)) {
@@ -169,17 +169,17 @@ const loginUser = async (identifier: string, password: string) => {
 
         // check if whether the identifier matches the email or username
         const usernameRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])[A-Za-z0-9]+$/;
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
 
         if (usernameRegex.test(identifier)) {
-            user = await User.findOne({ username: identifier }).select("+password");
+            user = await User.findOne({ username: identifier.toLowerCase() }).select("+password");
         } else if (emailRegex.test(identifier)) {
-            user = await User.findOne({ email: identifier }).select("+password");
+            user = await User.findOne({ email: identifier.toLowerCase() }).select("+password");
         }
 
         // check if the match for the user was found or not
         if (!user) {
-            throw new ApiError(404, "User does not exist!");
+            throw new ApiError(401, "Invalid username, email, or password");
         } else {
             // if the user was found, check for the password
             const isCorrectPassword = await user.verifyPassword(password);
@@ -192,7 +192,7 @@ const loginUser = async (identifier: string, password: string) => {
                 // return the access & refresh tokens
                 return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar, handle: user.handle };
             } else {
-                throw new ApiError(400, "Invalid password!")
+                throw new ApiError(401, "Invalid username, email, or password")
             }
         }
     }
@@ -258,14 +258,14 @@ const forgotPassword = async (email: string) => {
         throw new ApiError(400, "Email is required!");
     } else {
         // check for a valid email format
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
 
         if (!emailRegex.test(email)) {
             // throw error if email failes regex test
             throw new ApiError(400, "Invalid email format!");
         } else {
             // find the user
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ email: email.toLowerCase() });
 
             if (!user) {
                 // throw error if user is not found
@@ -302,14 +302,14 @@ const forgotPasswordReset = async (email: string, code: string, password: string
         throw new ApiError(400, "Email is required!");
     } else {
         // check for a valid email format
-        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+        const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
 
         if (!emailRegex.test(email)) {
             // throw error if email failes regex test
             throw new ApiError(400, "Invalid email format!");
         } else {
             // find the user
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ email: email.toLowerCase() });
 
             if (!user) {
                 // throw error if user is not found
@@ -351,7 +351,7 @@ const changeEmail = async (userId: string, newEmail: string) => {
         throw new ApiError(400, "New email is required!");
     }
 
-    const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/;
+    const emailRegex = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/i;
     if (!emailRegex.test(newEmail)) {
         throw new ApiError(400, "Invalid email format!");
     }
@@ -362,9 +362,9 @@ const changeEmail = async (userId: string, newEmail: string) => {
     }
 
     // Check if new email is already taken
-    const existing = await User.findOne({ email: newEmail });
+    const existing = await User.findOne({ email: newEmail.toLowerCase() });
     if (existing) {
-        throw new ApiError(400, "Email is already in use!");
+        throw new ApiError(409, "Email is already in use!");
     }
 
     // Generate new verification code
