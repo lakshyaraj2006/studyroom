@@ -230,7 +230,7 @@ const getRoom = async (roomId: string, userId?: string) => {
         );
 
         if (!isOwner && !isMember) {
-            throw new ApiError(401, "Access denied to private room!");
+            throw new ApiError(403, "Access denied to private room!");
         }
 
         return room;
@@ -253,7 +253,7 @@ const updateRoom = async (userId: string, roomId: string, roomData: {
     }
 
     if (room.room_creator.toString() != userId) {
-        throw new ApiError(401, "You cannot modify this room")
+        throw new ApiError(403, "You do not have permission to modify this room!");
     }
 
     let uploadedFileUrl: string | undefined;
@@ -299,7 +299,7 @@ const deleteRoom = async (userId: string, roomId: string) => {
     }
 
     if (room.room_creator.toString() != userId) {
-        throw new ApiError(401, "You cannot modify this room")
+        throw new ApiError(403, "You do not have permission to delete this room!");
     }
 
     const session = await mongoose.startSession();
@@ -345,11 +345,11 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
 
     const alreadyMember = room.room_users.some(id => id.equals(user._id));
     if (alreadyMember) {
-        throw new ApiError(400, "User has already joined the room!");
+        throw new ApiError(409, "User has already joined the room!");
     }
 
     if (room.room_creator.toString() === user._id.toString()) {
-        throw new ApiError(401, "You cannot invite yourself!");
+        throw new ApiError(400, "You cannot invite yourself!");
     }
 
     const invite_token = crypto.randomBytes(64).toString("base64url");
@@ -414,7 +414,7 @@ const acceptInvite = async (userId: string, roomId: string, token: string) => {
     }
 
     if (roomInvitation.sent_to_user.toString() !== userId) {
-        throw new ApiError(401, "Unauthorized access to invitation!");
+        throw new ApiError(403, "This invitation belongs to another user.");
     }
 
     const session = await mongoose.startSession();
@@ -468,7 +468,7 @@ const rejectInvite = async (userId: string, roomId: string, token: string) => {
     }
 
     if (roomInvitation.sent_to_user.toString() !== userId) {
-        throw new ApiError(401, "Unauthorized access to invitation!");
+        throw new ApiError(403, "This invitation belongs to another user.");
     }
 
     const session = await mongoose.startSession();
@@ -495,7 +495,7 @@ const removeUser = async (userId: string, userToRemoveId: string, roomId: string
     }
 
     if (room.room_creator.toString() !== userId) {
-        throw new ApiError(401, "You are not authorized to perform this action!");
+        throw new ApiError(403, "Only the room creator can remove members.");
     }
 
     const userToRemove = await User.findById(userToRemoveId);
@@ -546,14 +546,14 @@ const blockUser = async (userId: string, userToBlockId: string, roomId: string, 
 
     if (!room) throw new ApiError(404, "Room not found!");
 
-    if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
+    if (room.room_creator.toString() !== userId) throw new ApiError(403, "Only the room creator can block members.");
 
     const userToBlock = await User.findById(userToBlockId);
     if (!userToBlock) throw new ApiError(404, "User not found!");
 
     const alreadyBlocked = room.blocked_users?.some(id => id.equals(userToBlock._id));
     if (alreadyBlocked) {
-        throw new ApiError(400, "User is already blocked!");
+        throw new ApiError(409, "User is already blocked!");
     }
 
     const session = await mongoose.startSession();
@@ -634,7 +634,7 @@ const getBlockedUsers = async (userId: string, roomId: string) => {
 
     const result = await Room.aggregate(pipeline);
 
-    if (!result.length) throw new ApiError(401, "Unauthorized action!");
+    if (!result.length) throw new ApiError(403, "Only the room creator can view blocked users.");
 
     return result;
 }
@@ -650,7 +650,7 @@ const unblockUser = async (userId: string, blockedUserId: string, roomId: string
 
     if (!room) throw new ApiError(404, "Room not found!");
 
-    if (room.room_creator.toString() !== userId) throw new ApiError(401, "Unauthorized action!");
+    if (room.room_creator.toString() !== userId) throw new ApiError(403, "Only the room creator can unblock users.");
 
     const userToUnblock = await User.findById(blockedUserId);
     if (!userToUnblock) throw new ApiError(404, "User not found!");
@@ -699,12 +699,12 @@ const getInvitations = async (userId: string, roomId: string) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const roomObjectId = new mongoose.Types.ObjectId(roomId);
 
-    const room = await Room.findOne({
-        _id: roomObjectId,
-        room_creator: userObjectId
-    });
+    const room = await Room.findById(roomId);
 
-    if (!room) throw new ApiError(404, "Room not found or Unauthorized action!");
+    if (!room) throw new ApiError(404, "Room not found!");
+    if (room.room_creator.toString() !== userId) {
+        throw new ApiError(403, "Only the room creator can view invitations.");
+    }
 
     const pipeline: mongoose.PipelineStage[] = [
         {
@@ -762,13 +762,13 @@ const revokeInvitation = async (
     const sentToUserObjectId = new mongoose.Types.ObjectId(sent_to_user);
     const roomObjectId = new mongoose.Types.ObjectId(room_id);
 
-    const roomExists = await Room.exists({
-        _id: roomObjectId,
-        room_creator: ownerObjectId
-    });
+    const room = await Room.findById(roomObjectId);
 
-    if (!roomExists) {
-        throw new ApiError(404, "Room not found or Unauthorized!");
+    if (!room) {
+        throw new ApiError(404, "Room not found!");
+    }
+    if (room.room_creator.toString() !== userId) {
+        throw new ApiError(403, "Only the room creator can revoke invitations.");
     }
 
     // Fetch invitation + user details
@@ -802,19 +802,12 @@ const joinRoom = async (userId: string, room_id: string) => {
     const userObjectId = new mongoose.Types.ObjectId(userId);
     const isMember = room.room_users.some(id => id.equals(userObjectId));
 
-    if (room.access_type === AccessType.PRIVATE) {
-        if (room.access_type === AccessType.PRIVATE) {
-            throw new ApiError(
-                isMember ? 400 : 401,
-                isMember
-                    ? "You are already a member of this room!"
-                    : "You are not authorized to access this room!"
-            );
-        }
+    if (isMember) {
+        throw new ApiError(409, "You are already a member of this room!");
     }
 
-    if (isMember) {
-        throw new ApiError(400, "You are already a member of this room!");
+    if (room.access_type === AccessType.PRIVATE) {
+        throw new ApiError(403, "You cannot join a private room directly. An invitation is required.");
     }
     const session = await mongoose.startSession();
     session.startTransaction();
