@@ -13,6 +13,7 @@ export interface Profile {
     last_login: string,
     last_active: string,
     avatar?: string,
+    banner?: string,
     verified: boolean,
     is_deleted: false,
     createdAt: Date,

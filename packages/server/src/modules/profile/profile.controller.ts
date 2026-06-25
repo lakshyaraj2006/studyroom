@@ -56,6 +56,32 @@ const deleteProfilePic = asyncHandler(
     }
 )
 
+const uploadBanner = asyncHandler(
+    async (req: Request, res: Response) => {
+        const bannerLocalPath = req.file?.path;
+
+        if (!bannerLocalPath) {
+            throw new ApiError(400, "Banner file is required!");
+        }
+
+        const result = await profileService.uploadBanner(req.user as string, bannerLocalPath);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {banner: result.banner}, "Profile Banner Uploaded"))
+    }
+)
+
+const deleteBanner = asyncHandler(
+    async (req: Request, res: Response) => {
+        const result = await profileService.deleteBanner(req.user as string);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Profile Banner Removed"))
+    }
+)
+
 const followUser = asyncHandler(
     async (req: Request, res: Response) => {
         const { userHandle } = req.params;
@@ -112,4 +138,4 @@ const deleteUserProfileConfirm = asyncHandler(
     }
 )
 
-export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };
+export const profileController = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, uploadBanner, deleteBanner, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };

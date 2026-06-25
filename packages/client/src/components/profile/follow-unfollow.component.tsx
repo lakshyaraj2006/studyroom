@@ -4,6 +4,7 @@ import axiosInstance from "@/lib/api";
 import { type ServerResponse } from "@/interfaces/server-response";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { UserPlus, UserCheck } from "lucide-react";
 
 type FollowUnfollowComponentProps = {
     isFollowing: boolean,
@@ -41,7 +42,6 @@ export default function FollowUnfollowComponent({ isFollowing, setIsFollowing, u
             }
             setIsFollowing(false);
             console.log(error);
-            
         }
     }
 
@@ -65,22 +65,29 @@ export default function FollowUnfollowComponent({ isFollowing, setIsFollowing, u
             }
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data?.message || "Unollow failed")
+                toast.error(error.response?.data?.message || "Unfollow failed")
             } else {
-                toast.error("Follow failed")
+                toast.error("Unfollow failed")
             }
             setIsFollowing(true);
             console.log(error);
-            
         }
     }
 
     return (
-        <div>
+        <div className="flex justify-center w-full">
             {
-                !isFollowing
-                    ? <Button className="cursor-pointer" onClick={handleFollow}>Follow</Button>
-                    : <Button className="cursor-pointer" onClick={handleUnfollow}>Unfollow</Button>
+                !isFollowing ? (
+                    <Button className="w-full cursor-pointer flex items-center justify-center gap-2 shadow-sm font-medium h-10 transition-all duration-200" onClick={handleFollow}>
+                        <UserPlus className="w-4 h-4" />
+                        Follow
+                    </Button>
+                ) : (
+                    <Button className="w-full cursor-pointer flex items-center justify-center gap-2 border shadow-xs font-medium h-10 transition-all duration-200" variant="outline" onClick={handleUnfollow}>
+                        <UserCheck className="w-4 h-4 text-emerald-500" />
+                        Following
+                    </Button>
+                )
             }
         </div>
     )
