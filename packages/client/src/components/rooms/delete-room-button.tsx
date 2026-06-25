@@ -21,11 +21,13 @@ import {
 type DeleteRoomButtonProps = {
     roomId: string;
     authToken: string;
+    trigger?: React.ReactNode;
 };
 
 export default function DeleteRoomButton({
     roomId,
-    authToken
+    authToken,
+    trigger
 }: DeleteRoomButtonProps) {
     const navigate = useNavigate();
     const [isDeleting, setIsDeleting] = useState(false);
@@ -56,13 +58,15 @@ export default function DeleteRoomButton({
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button
-                    variant="outline"
-                    className="group border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
-                >
-                    <Trash2Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
-                    Delete Room
-                </Button>
+                {trigger || (
+                    <Button
+                        variant="outline"
+                        className="group border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-all"
+                    >
+                        <Trash2Icon className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+                        Delete Room
+                    </Button>
+                )}
             </AlertDialogTrigger>
 
             <AlertDialogContent className="sm:max-w-md rounded-2xl">

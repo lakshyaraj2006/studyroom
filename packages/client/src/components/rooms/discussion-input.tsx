@@ -27,10 +27,10 @@ export default function DiscussionInput({ onSend }: DiscussionInputProps) {
     return (
         <div className="flex gap-2 items-end">
             <Textarea
-                placeholder="Type your message here..."
+                placeholder="Write a message in the study hall..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="flex-1 min-h-[44px] max-h-[120px] bg-slate-50 border-slate-200 focus:border-indigo-500 rounded-xl py-2.5 px-3 resize-none text-sm leading-relaxed"
+                className="flex-1 min-h-[44px] max-h-[120px] bg-[#f8fafc] dark:bg-[#0f172a]/40 border border-border/80 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary text-foreground placeholder-muted-foreground/60 rounded-xl py-3 px-4 resize-none text-sm leading-relaxed"
                 disabled={sending}
                 onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -42,7 +42,7 @@ export default function DiscussionInput({ onSend }: DiscussionInputProps) {
             <Button
                 size="icon"
                 onClick={handleSend}
-                className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shrink-0"
+                className="h-11 w-11 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer shrink-0 transition duration-150 active:scale-95 shadow-sm shadow-primary/10"
                 disabled={sending || !message.trim()}
             >
                 {sending ? (

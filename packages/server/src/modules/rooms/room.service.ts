@@ -8,6 +8,7 @@ import { sendRoomInviteEmail } from "@/jobs/emails/sendRoomInvite";
 import mongoose from "mongoose";
 import { sendRoomBlockedEmail } from "@/jobs/emails/sendRoomBlockedEmail";
 import { escapeRegex } from "@/shared/lib/escapeRegex";
+import { activeUsersPerRoom } from "./room.socket";
 
 const createRoom = async (userId: string, roomData: {
     name: string,
@@ -944,4 +945,36 @@ const searchUserByNameOrEmail = async (
     return users;
 };
 
-export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail };
+const getRoomMembersWithStatus = async (roomId: string) => {
+    const room = await Room.findById(roomId)
+        .populate("room_creator", "_id name username handle avatar")
+        .populate("room_users", "_id name username handle avatar");
+
+    if (!room) {
+        throw new ApiError(404, "Room not found");
+    }
+
+    const activeUsers = activeUsersPerRoom.get(roomId) || new Set<string>();
+
+    const creator = room.room_creator as any;
+    const users = (room.room_users || []) as any[];
+
+    const mapUser = (u: any) => ({
+        _id: u._id,
+        name: u.name,
+        username: u.username,
+        handle: u.handle,
+        avatar: u.avatar,
+        active: activeUsers.has(u._id.toString())
+    });
+
+    const members = [mapUser(creator), ...users.map(mapUser)];
+
+    const uniqueMembers = members.filter((member, index, self) =>
+        index === self.findIndex((m) => m._id.toString() === member._id.toString())
+    );
+
+    return uniqueMembers;
+};
+
+export const roomService = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, unblockUser, getBlockedUsers, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail, getRoomMembersWithStatus };

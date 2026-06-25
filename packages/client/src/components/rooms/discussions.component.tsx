@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { type Room } from "@/interfaces/room";
 import { type IDiscussion } from "@/interfaces/discussion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import useAxiosPrivate from "@/hooks/useAxiosPrivate";
 import { type ServerResponse } from "@/interfaces/server-response";
 import { AxiosError } from "axios";
-import { Loader2Icon, UserPlus2Icon } from "lucide-react";
+import { Loader2Icon, UserPlus2Icon, MessageSquare, Menu, Users, BookOpen } from "lucide-react";
 import { io } from "socket.io-client";
+import { Button } from "@/components/ui/button";
 import DiscussionItem from "./discussion-item";
 import DiscussionInput from "./discussion-input";
 
@@ -17,9 +16,19 @@ type DiscussionsProps = {
     roomDetails: Room;
     isMember: boolean;
     setIsMember: React.Dispatch<React.SetStateAction<boolean>>;
+    onToggleLeftSidebar?: () => void;
+    onToggleRightSidebar?: () => void;
+    membersList?: any[];
 };
 
-export default function Discussions({ roomDetails, isMember, setIsMember }: DiscussionsProps) {
+export default function Discussions({
+    roomDetails,
+    isMember,
+    setIsMember,
+    onToggleLeftSidebar,
+    onToggleRightSidebar,
+    membersList = []
+}: DiscussionsProps) {
     const { authToken, usrInfo } = useAuth();
     const axiosPrivate = useAxiosPrivate();
 
@@ -197,36 +206,78 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
 
     const isRoomCreator = usrInfo?.id === roomDetails.room_creator._id;
 
-    return (
-        <Card className="rounded-2xl shadow-sm border border-border/40 flex flex-col h-[600px] overflow-hidden bg-card">
-            <CardHeader className="border-b border-border/40 py-4">
-                <CardTitle className="text-lg font-semibold text-foreground">
-                    Discussions
-                </CardTitle>
-            </CardHeader>
+    // Check if consecutive messages should be grouped
+    const checkIsGrouped = (currentItem: IDiscussion, prevItem?: IDiscussion) => {
+        if (!prevItem) return false;
+        if (currentItem.user._id !== prevItem.user._id) return false;
 
-            <CardContent className="flex-1 flex flex-col justify-between p-4 overflow-hidden bg-muted/10">
-                {/* Scrollable message container */}
-                <div
-                    ref={scrollRef}
-                    className="flex-1 overflow-y-auto pr-2 space-y-4 mb-4 scrollbar-thin scrollbar-thumb-border"
-                >
-                    {fetching ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                            <Loader2Icon className="animate-spin h-8 w-8 mb-2" />
-                            <p className="text-sm">Fetching discussions...</p>
+        const currentMs = new Date(currentItem.createdAt).getTime();
+        const prevMs = new Date(prevItem.createdAt).getTime();
+        const diffMins = (currentMs - prevMs) / 60000;
+        return diffMins < 5; // Group if within 5 minutes
+    };
+
+    return (
+        <div className="flex flex-col h-full flex-1 overflow-hidden bg-white dark:bg-slate-950/20">
+            
+            {/* Cozy styled Header Bar */}
+            <div className="h-12 border-b border-border/40 px-4 flex items-center justify-between shrink-0 select-none bg-slate-50/50 dark:bg-slate-900/20 backdrop-blur-xs">
+                <div className="flex items-center min-w-0">
+                    <button
+                        onClick={onToggleLeftSidebar}
+                        className="md:hidden mr-2 p-1 rounded-md text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-foreground transition cursor-pointer"
+                        title="Toggle navigation"
+                    >
+                        <Menu className="h-5 w-5" />
+                    </button>
+                    
+                    <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+                    <span className="ml-1.5 text-sm font-semibold text-foreground truncate">study-hall-chat</span>
+                    
+                    <div className="h-4 w-px bg-border/40 mx-3 hidden sm:inline shrink-0" />
+                    
+                    <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                        {roomDetails.room_tagline || "Grind together, shine together!"}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={onToggleRightSidebar}
+                        className="md:hidden p-1 rounded-md text-muted-foreground hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-foreground transition cursor-pointer"
+                        title="Toggle student roster"
+                    >
+                        <Users className="h-5 w-5" />
+                    </button>
+                </div>
+            </div>
+
+            {/* Chat Area Scroll Container */}
+            <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto px-4 py-5 space-y-1.5 scrollbar-thin scrollbar-thumb-border"
+            >
+                {fetching ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                        <Loader2Icon className="animate-spin h-8 w-8 mb-2" />
+                        <p className="text-sm">Retrieving blackboard discussions...</p>
+                    </div>
+                ) : discussions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-20 px-6">
+                        <div className="bg-primary/5 p-4 rounded-full mb-3 select-none border border-primary/10">
+                            <BookOpen className="h-8 w-8 text-primary" />
                         </div>
-                    ) : discussions.length === 0 ? (
-                        <div className="text-center py-20 bg-card border border-border/40 rounded-xl p-6 shadow-xs">
-                            <p className="text-sm text-muted-foreground font-medium">No discussions yet</p>
-                            {!isMember && !isBlockedLocal && (
-                                <p className="text-xs text-muted-foreground/80 mt-2">
-                                    Join this room to start participating.
-                                </p>
-                            )}
-                        </div>
-                    ) : (
-                        discussions.map((item) => (
+                        <h2 className="text-lg font-bold text-foreground">Welcome to {roomDetails.room_name}!</h2>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                            This is the start of the student bulletin board in this room.
+                            {!isMember && !isBlockedLocal && " Join our study room to start sharing!"}
+                        </p>
+                    </div>
+                ) : (
+                    discussions.map((item, idx) => {
+                        const isGrouped = checkIsGrouped(item, discussions[idx - 1]);
+                        const senderActive = membersList.find(m => m._id === item.user._id)?.active || false;
+                        return (
                             <DiscussionItem
                                 key={item._id}
                                 item={item}
@@ -234,50 +285,58 @@ export default function Discussions({ roomDetails, isMember, setIsMember }: Disc
                                 isRoomCreator={isRoomCreator}
                                 onSave={handleSaveEdit}
                                 onDelete={handleDeleteMessage}
+                                isGrouped={isGrouped}
+                                senderActive={senderActive}
                             />
-                        ))
-                    )}
-                </div>
+                        );
+                    })
+                )}
+            </div>
 
-                {/* Input area or Join action */}
-                <div className="border-t border-border/40 pt-4 bg-card -mx-4 -mb-4 p-4 shadow-inner">
-                    {isBlockedLocal ? (
-                        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3.5 text-center flex flex-col items-center gap-1 shadow-2xs">
-                            <p className="text-xs font-bold text-destructive">
-                                You have been blocked from this room
+            {/* Bottom Input Area or Join Room CTA */}
+            <div className="p-4 bg-slate-50/50 dark:bg-slate-900/10 border-t border-border/40 shrink-0">
+                {isBlockedLocal ? (
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3.5 text-center flex flex-col items-center gap-1">
+                        <p className="text-xs font-bold text-destructive">
+                            You have been blocked from participating in this room
+                        </p>
+                        <p className="text-[11px] text-destructive/80 font-medium">
+                            You can view the bulletin board but cannot post messages.
+                        </p>
+                    </div>
+                ) : isMember ? (
+                    <DiscussionInput onSend={handleSendMessage} />
+                ) : (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl border border-border/40">
+                        <div className="text-center sm:text-left">
+                            <p className="text-xs font-semibold text-foreground">
+                                Visiting as Guest
                             </p>
-                            <p className="text-[11px] text-destructive/80 font-medium">
-                                You can view conversations but are not permitted to participate.
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Join this study room to write on the board and collaborate with students.
                             </p>
                         </div>
-                    ) : isMember ? (
-                        <DiscussionInput onSend={handleSendMessage} />
-                    ) : (
-                        <div className="flex flex-col items-center gap-3 py-2">
-                            <p className="text-xs text-muted-foreground text-center font-medium">
-                                You are viewing this room as a guest. Join to send messages.
-                            </p>
-                            <Button
-                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer rounded-xl h-11"
-                                onClick={handleJoinRoom}
-                                disabled={joining}
-                            >
-                                {joining ? (
-                                    <>
-                                        <Loader2Icon className="animate-spin h-4 w-4 mr-2" />
-                                        Joining Room...
-                                    </>
-                                ) : (
-                                    <>
-                                        <UserPlus2Icon className="h-4 w-4 mr-2" />
-                                        Join Room
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                        <Button
+                            className="w-full sm:w-auto bg-primary hover:bg-primary/95 text-primary-foreground cursor-pointer rounded-xl h-9 px-4 text-xs font-medium"
+                            onClick={handleJoinRoom}
+                            disabled={joining}
+                        >
+                            {joining ? (
+                                <>
+                                    <Loader2Icon className="animate-spin h-3.5 w-3.5 mr-1.5" />
+                                    Joining Room...
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus2Icon className="h-3.5 w-3.5 mr-1.5" />
+                                    Join Study Room
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+        </div>
     );
 }
