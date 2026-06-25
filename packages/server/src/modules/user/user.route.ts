@@ -9,6 +9,7 @@ router.route("/resend-code").post(userController.resendVerificationCode);
 router.route("/verify-email").post(userController.verifyEmail);
 router.route("/login").post(userController.loginUser);
 router.route("/logout").post(checkAuth, userController.logoutUser);
+router.route("/change-email").post(checkAuth, userController.changeEmail);
 router.route("/rotate").post(userController.rotateAccessAndRefreshTokens);
 router.route("/forgot-password").post(userController.forgotPassword);
 router.route("/forgot-password-reset").post(userController.forgotPasswordReset);

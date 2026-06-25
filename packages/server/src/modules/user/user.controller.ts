@@ -120,4 +120,17 @@ const forgotPasswordReset = asyncHandler(
     }
 );
 
-export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode };
+const changeEmail = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { email } = req.body;
+        const userId = req.user as string;
+
+        await userService.changeEmail(userId, email);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, null, "Email updated and verification code sent."));
+    }
+);
+
+export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail };
