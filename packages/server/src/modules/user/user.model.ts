@@ -9,6 +9,7 @@ export interface IUser extends Document {
     email: string;
     handle: string;
     avatar?: string;
+    banner?: string;
     bio?: string;
     followers: mongoose.Types.ObjectId[];
     following: mongoose.Types.ObjectId[];
@@ -57,6 +58,9 @@ const UserSchema = new Schema<IUser>({
         trim: true
     },
     avatar: {
+        type: String
+    },
+    banner: {
         type: String
     },
     bio: {

@@ -8,6 +8,8 @@ router.route('/get/:userHandle').get(profileController.getUserProfile);
 router.route('/update').patch(checkAuth, checkVerified, profileController.updateUserProfile);
 router.route('/upload-avatar').post(checkAuth, checkVerified, upload.single('image'), profileController.uploadProfilePic);
 router.route('/remove-avatar').delete(checkAuth, checkVerified, profileController.deleteProfilePic);
+router.route('/upload-banner').post(checkAuth, checkVerified, upload.single('image'), profileController.uploadBanner);
+router.route('/remove-banner').delete(checkAuth, checkVerified, profileController.deleteBanner);
 router.route('/follow/:userHandle').post(checkAuth, checkVerified, profileController.followUser);
 router.route('/unfollow/:userHandle').delete(checkAuth, checkVerified, profileController.unfollowUser);
 router.route('/delete-code').post(checkAuth, checkVerified, profileController.sendDeleteUserProfileCode);

@@ -106,41 +106,28 @@ export default function ProfileAvatar({
     }
 
     return (
-        <div className="relative">
-            <Avatar className="w-32 h-32">
-                <AvatarImage src={avatar || "/user.png"} />
-                <AvatarFallback>U</AvatarFallback>
+        <div className="relative group rounded-full overflow-hidden">
+            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 transition-all duration-300 ring-2 ring-transparent group-hover:ring-indigo-500/25">
+                <AvatarImage src={avatar || "/user.png"} className="object-cover w-full h-full" />
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-indigo-500 text-white font-bold text-3xl select-none">
+                    U
+                </AvatarFallback>
             </Avatar>
 
             {isOwnProfile && isEditing && (
-                <>
-                    {avatar && (
-                        <button
-                            type="button"
-                            onClick={handleRemove}
-                            disabled={avatarAction !== null}
-                            className="absolute bottom-1 left-1 bg-background border rounded-full p-2 shadow hover:bg-red-50 text-red-600 transition disabled:cursor-not-allowed"
-                        >
-                            {avatarAction === "remove" ? (
-                                <Spinner className="w-4 h-4" />
-                            ) : (
-                                <Trash2Icon className="w-4 h-4" />
-                            )}
-                        </button>
+                <div 
+                    onClick={() => avatarAction === null && fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-black/55 backdrop-blur-[1px] rounded-full flex flex-col items-center justify-center text-white cursor-pointer transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                    title="Change Photo"
+                >
+                    {avatarAction === "upload" ? (
+                        <Spinner className="w-5 h-5 border-white" />
+                    ) : (
+                        <>
+                            <Camera className="w-6 h-6 mb-1 text-white" />
+                            <span className="text-[10px] font-bold tracking-wider uppercase text-white/90">Edit</span>
+                        </>
                     )}
-
-                    <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={avatarAction !== null}
-                        className="absolute bottom-1 right-1 bg-background border rounded-full p-2 shadow hover:bg-muted transition disabled:cursor-not-allowed"
-                    >
-                        {avatarAction === "upload" ? (
-                            <Spinner className="w-4 h-4" />
-                        ) : (
-                            <Camera className="w-4 h-4" />
-                        )}
-                    </button>
 
                     <input
                         ref={fileInputRef}
@@ -149,7 +136,7 @@ export default function ProfileAvatar({
                         hidden
                         onChange={handleUpload}
                     />
-                </>
+                </div>
             )}
         </div>
     )

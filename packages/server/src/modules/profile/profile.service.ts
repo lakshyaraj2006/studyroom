@@ -5,7 +5,6 @@ import { ApiError } from "@/core/errors/ApiError";
 import { sendDeleteAccountEmail } from "@/jobs/emails/sendDeleteAccountEmailCode";
 import { generateVerificationCode } from "@/shared/lib/generateVerificationCode";
 import { sendVerificationEmail } from "@/jobs/emails/sendVerificationEmail";
-
 const getUserProfile = async (userHandle: string) => {
     if (!userHandle || userHandle === "") {
         throw new ApiError(400, "User handle required")
@@ -77,6 +76,45 @@ const deleteProfilePic = async (userId: string) => {
         const result = await deleteFromCloudinary(publicId);
         await User.findByIdAndUpdate(userId, {
             $unset: { avatar: 1 }
+        })
+
+        return result;
+    }
+}
+
+const uploadBanner = async (userId: string, bannerLocalPath: string) => {
+    const result = await uploadOnCloudinary(bannerLocalPath, 'profiles/' + userId + 'banners/');
+
+    if (!result) {
+        throw new ApiError(400, "Banner file is required!");
+    }
+
+    await User.findByIdAndUpdate(
+        userId,
+        {
+            banner: result.secure_url
+        }
+    )
+
+    return {banner: result.secure_url};
+}
+
+const deleteBanner = async (userId: string) => {
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    } else if (!user?.banner) {
+        throw new ApiError(400, "User does not have a banner picture.");
+    }
+    else {
+        const publicId = getCloudinaryPublicId(user?.banner);
+
+        if (!publicId) return;
+
+        const result = await deleteFromCloudinary(publicId);
+        await User.findByIdAndUpdate(userId, {
+            $unset: { banner: 1 }
         })
 
         return result;
@@ -178,6 +216,7 @@ const deleteUserProfileConfirm = async (userId: string, code: string) => {
       user.email = `deleted+${userId}@studyroom.com`;
       user.password = undefined;
       user.avatar = undefined;
+      user.banner = undefined;
       user.bio = undefined;
       user.verifyCode = undefined;
       user.verifyCodeExpiry = undefined;
@@ -190,4 +229,4 @@ const deleteUserProfileConfirm = async (userId: string, code: string) => {
   }
 }
 
-export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };
+export const profileService = { getUserProfile, updateUserProfile, uploadProfilePic, deleteProfilePic, uploadBanner, deleteBanner, followUser, unfollowUser, sendDeleteUserProfileCode, deleteUserProfileConfirm };

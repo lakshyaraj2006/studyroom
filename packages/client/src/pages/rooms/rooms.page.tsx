@@ -112,7 +112,7 @@ const Rooms = () => {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between border-b border-border/40 pb-6 gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
             Study Rooms
           </h1>
           <p className="text-sm text-muted-foreground">
