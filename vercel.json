@@ -1,0 +1,32 @@
+{
+    "services": {
+        "studyroom_client": {
+            "root": "packages/client/",
+            "framework": "vite",
+            "rewrites": [
+                {
+                    "source": "/(.*)",
+                    "destination": "/index.html"
+                }
+            ]
+        },
+        "studyroom_server": {
+            "root": "packages/server/",
+            "entrypoint": "src/server.ts"
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/api/v1/(.*)",
+            "destination": {
+                "service": "studyroom_server"
+            }
+        },
+        {
+            "source": "/(.*)",
+            "destination": {
+                "service": "studyroom_client"
+            }
+        }
+    ]
+}

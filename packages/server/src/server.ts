@@ -1,3 +1,5 @@
+/// <reference path="./shared/types/custom.d.ts" />
+
 import express from "express";
 import "dotenv/config";
 import { connectDB } from "@/core/db";
