@@ -1,3 +1,5 @@
+/// <reference path="./shared/types/custom.d.ts" />
+
 import express from "express";
 import "dotenv/config";
 import { connectDB } from "@/core/db";
@@ -9,7 +11,7 @@ import { errorHandler } from "@/core/middlewares";
 import { roomRouter } from "@/modules/rooms/room.route";
 import { discussionRouter } from "@/modules/discussions/discussion.route";
 import { contactRouter } from "@/modules/contact/contact.route";
-import { initSocket } from "@/modules/discussions/discussion.socket";
+import { initSocket } from "@/core/socket";
 
 import dns from "node:dns/promises";
 dns.setServers(['1.1.1.1', '8.8.8.8']);

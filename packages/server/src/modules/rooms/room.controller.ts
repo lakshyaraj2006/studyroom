@@ -10,7 +10,7 @@ import {
     broadcastUserLeft,
     broadcastUserBlocked,
     broadcastUserUnblocked
-} from "../discussions/discussion.socket";
+} from "./room.socket";
 
 const createRoom = asyncHandler(
     async (req: Request, res: Response) => {
@@ -279,4 +279,18 @@ const searchUserByNameOrEmail = asyncHandler(
     }
 )
 
-export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail };
+const getRoomMembersWithStatus = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { roomId } = req.params;
+
+        if (!roomId) throw new ApiError(400, "Room Id is required!");
+
+        const result = await roomService.getRoomMembersWithStatus(roomId);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, result, "Room members and active status fetched successfully!"));
+    }
+)
+
+export const roomController = { createRoom, getRooms, getRoom, updateRoom, deleteRoom, sendInvite, acceptInvite, rejectInvite, removeUser, blockUser, getBlockedUsers, unblockUser, getInvitations, revokeInvitation, joinRoom, leaveRoom, checkMember, searchUserByNameOrEmail, getRoomMembersWithStatus };

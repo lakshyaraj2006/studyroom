@@ -37,12 +37,14 @@ type InviteModalProps = {
     roomId: string
     authToken: string
     ownerEmail: string
+    trigger?: React.ReactNode
 }
 
 export default function InviteModal({
     roomId,
     authToken,
     ownerEmail,
+    trigger,
 }: InviteModalProps) {
     const [queryString, setQueryString] = useState("")
     const [users, setUsers] = useState<User[]>([])
@@ -139,10 +141,12 @@ export default function InviteModal({
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                    <UserPlus2Icon className="h-4 w-4" />
-                    <span>Invite Users</span>
-                </Button>
+                {trigger || (
+                    <Button className="flex items-center gap-2">
+                        <UserPlus2Icon className="h-4 w-4" />
+                        <span>Invite Users</span>
+                    </Button>
+                )}
             </DialogTrigger>
 
             <DialogContent className="sm:max-w-md md:max-w-xl rounded-2xl p-0 overflow-hidden">

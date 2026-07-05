@@ -23,5 +23,6 @@ router.route('/join-room/:roomId/').patch(checkAuth, checkVerified, roomControll
 router.route('/leave-room/:roomId/').patch(checkAuth, checkVerified, roomController.leaveRoom);
 router.route('/check-member/:roomId/').get(checkAuth, checkVerified, roomController.checkMember);
 router.route('/search-room-users/:roomId').get(roomController.searchUserByNameOrEmail);
+router.route('/:roomId/members').get(checkAuth, checkVerified, roomController.getRoomMembersWithStatus);
 
 export { router as roomRouter };

@@ -3,7 +3,7 @@ import type { Profile } from "./profile";
 export type RoomUser = Pick<
     Profile,
     "_id" | "name" | "username" | "handle" | "avatar"
->;
+> & { active?: boolean };
 
 export interface Room {
     _id: string;
