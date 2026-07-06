@@ -211,23 +211,25 @@ const getRoom = async (roomId: string, userId?: string) => {
         ? new mongoose.Types.ObjectId(userId)
         : null;
 
-    if (room.access_type === AccessType.PRIVATE) {
-        if (!userId) {
-            throw new ApiError(401, "Login required to access this room");
-        }
-
-        const isBlocked = room.blocked_users?.some((id: any) =>
-            id.equals(userObjectId)
+    if (userId) {
+        const isBlocked = room.blocked_users?.some((u: any) =>
+            u._id.equals(userObjectId)
         );
 
         if (isBlocked) {
             throw new ApiError(403, "You are blocked from this room!");
         }
+    }
+
+    if (room.access_type === AccessType.PRIVATE) {
+        if (!userId) {
+            throw new ApiError(401, "Login required to access this room");
+        }
 
         const isOwner = room.room_creator._id.toString() === userId;
 
-        const isMember = room.room_users.some((id: any) =>
-            id.equals(userObjectId)
+        const isMember = room.room_users.some((u: any) =>
+            u._id.equals(userObjectId)
         );
 
         if (!isOwner && !isMember) {
@@ -327,10 +329,14 @@ const deleteRoom = async (userId: string, roomId: string) => {
     return true;
 };
 
-const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
+const sendInvite = async (userId: string, toEmail: string, roomId: string, baseUrl: string) => {
     const room = await Room.findById(roomId);
     if (!room) {
         throw new ApiError(404, "Room not found!");
+    }
+
+    if (room.room_creator.toString() !== userId) {
+        throw new ApiError(403, "Only the room creator can send invitations.");
     }
 
     const user = await User.findOne({ email: toEmail }).select("_id name username email");
@@ -351,6 +357,11 @@ const sendInvite = async (toEmail: string, roomId: string, baseUrl: string) => {
 
     if (room.room_creator.toString() === user._id.toString()) {
         throw new ApiError(400, "You cannot invite yourself!");
+    }
+
+    const existingInvite = await RoomInvite.findOne({ room_id: room._id, sent_to_user: user._id });
+    if (existingInvite) {
+        throw new ApiError(409, "An invitation has already been sent to this user.");
     }
 
     const invite_token = crypto.randomBytes(64).toString("base64url");
@@ -403,6 +414,12 @@ const acceptInvite = async (userId: string, roomId: string, token: string) => {
     const user = await User.findById(userId);
     if (!user) {
         throw new ApiError(404, "User not found!");
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isBlocked = room.blocked_users?.some(id => id.equals(userObjectId));
+    if (isBlocked) {
+        throw new ApiError(403, "You are blocked from this room!");
     }
 
     const roomInvitation = await RoomInvite.findOne({ room_id: roomId, room_invite_token: token });
@@ -801,6 +818,12 @@ const joinRoom = async (userId: string, room_id: string) => {
     if (!user) throw new ApiError(404, "User not found!");
 
     const userObjectId = new mongoose.Types.ObjectId(userId);
+
+    const isBlocked = room.blocked_users?.some(id => id.equals(userObjectId));
+    if (isBlocked) {
+        throw new ApiError(403, "You are blocked from this room!");
+    }
+
     const isMember = room.room_users.some(id => id.equals(userObjectId));
 
     if (isMember) {
@@ -895,6 +918,7 @@ const checkMember = async (userId: string, room_id: string) => {
 }
 
 const searchUserByNameOrEmail = async (
+    userId: string,
     roomId: string,
     query?: string
 ) => {
@@ -906,10 +930,14 @@ const searchUserByNameOrEmail = async (
         throw new ApiError(400, "Please enter name or email");
     }
 
-    const room = await Room.findById(roomId).select("room_users");
+    const room = await Room.findById(roomId).select("room_users room_creator blocked_users");
 
     if (!room) {
         throw new ApiError(404, "Room not found!");
+    }
+
+    if (room.room_creator.toString() !== userId) {
+        throw new ApiError(403, "Only the room creator can search users for invitation.");
     }
 
     // Get already invited users
@@ -917,7 +945,9 @@ const searchUserByNameOrEmail = async (
         .select("sent_to_user");
 
     const excludedUserIds = [
-        ...room.room_users.map((id: any) => id.toString()),
+        room.room_creator.toString(),
+        ...(room.room_users || []).map((id: any) => id.toString()),
+        ...(room.blocked_users || []).map((id: any) => id.toString()),
         ...invites.map((invite) => invite.sent_to_user.toString())
     ];
 
@@ -945,13 +975,26 @@ const searchUserByNameOrEmail = async (
     return users;
 };
 
-const getRoomMembersWithStatus = async (roomId: string) => {
+const getRoomMembersWithStatus = async (roomId: string, userId?: string) => {
     const room = await Room.findById(roomId)
         .populate("room_creator", "_id name username handle avatar")
         .populate("room_users", "_id name username handle avatar");
 
     if (!room) {
         throw new ApiError(404, "Room not found");
+    }
+
+    if (room.access_type === AccessType.PRIVATE) {
+        if (!userId) {
+            throw new ApiError(401, "Login required to access this room");
+        }
+        const isCreator = room.room_creator._id.toString() === userId;
+        const isMember = (room.room_users as any[] || []).some(
+            (u) => u._id.toString() === userId
+        );
+        if (!isCreator && !isMember) {
+            throw new ApiError(403, "You do not have access to this private room");
+        }
     }
 
     const activeUsers = activeUsersPerRoom.get(roomId) || new Set<string>();

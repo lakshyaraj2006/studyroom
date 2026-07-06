@@ -22,7 +22,7 @@ router.route('/revoke-invitation/:roomId/').delete(checkAuth, checkVerified, roo
 router.route('/join-room/:roomId/').patch(checkAuth, checkVerified, roomController.joinRoom);
 router.route('/leave-room/:roomId/').patch(checkAuth, checkVerified, roomController.leaveRoom);
 router.route('/check-member/:roomId/').get(checkAuth, checkVerified, roomController.checkMember);
-router.route('/search-room-users/:roomId').get(roomController.searchUserByNameOrEmail);
+router.route('/search-room-users/:roomId').get(checkAuth, checkVerified, roomController.searchUserByNameOrEmail);
 router.route('/:roomId/members').get(checkAuth, checkVerified, roomController.getRoomMembersWithStatus);
 
 export { router as roomRouter };

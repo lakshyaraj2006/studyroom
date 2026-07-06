@@ -89,7 +89,7 @@ const sendInvite = asyncHandler(
 
         if (!frontendUrl) throw new Error("Frontend url not specified!");
 
-        const result = await roomService.sendInvite(req.body.email, req.params.roomId, process.env.FRONTEND_URL!);
+        const result = await roomService.sendInvite(req.user as string, req.body.email, req.params.roomId, process.env.FRONTEND_URL!);
 
         return res
             .status(200)
@@ -271,7 +271,7 @@ const checkMember = asyncHandler(
 const searchUserByNameOrEmail = asyncHandler(
     async (req: Request, res: Response) => {
 
-        const result = await roomService.searchUserByNameOrEmail(req.params.roomId, req.query.q as string | undefined);
+        const result = await roomService.searchUserByNameOrEmail(req.user as string, req.params.roomId, req.query.q as string | undefined);
 
         return res
             .status(200)
@@ -285,7 +285,7 @@ const getRoomMembersWithStatus = asyncHandler(
 
         if (!roomId) throw new ApiError(400, "Room Id is required!");
 
-        const result = await roomService.getRoomMembersWithStatus(roomId);
+        const result = await roomService.getRoomMembersWithStatus(roomId, req.user);
 
         return res
             .status(200)
