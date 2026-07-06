@@ -50,7 +50,7 @@ export default function InviteModal({
     const [users, setUsers] = useState<User[]>([])
     const [isSearching, setIsSearching] = useState(false)
     const [invitingEmail, setInvitingEmail] = useState<string | null>(null)
-    const [refreshInvitations,setRefreshInvitations,] = useState(0)
+    const [refreshInvitations, setRefreshInvitations,] = useState(0)
 
     const debouncedQuery = useDebounce(queryString)
 
@@ -69,6 +69,9 @@ export default function InviteModal({
                 const res = await axiosInstance.get<
                     ServerResponse<User[]>
                 >(`/rooms/search-room-users/${roomId}`, {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
                     params: {
                         q: debouncedQuery,
                     },
