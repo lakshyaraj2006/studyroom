@@ -31,7 +31,7 @@ const RoomInviteSchema = new Schema<IRoomInvite>({
     }
 }, { timestamps: true });
 
-RoomInviteSchema.index({ room_id: 1 }, { unique: true });
+RoomInviteSchema.index({ room_id: 1, sent_to_user: 1 }, { unique: true });
 RoomInviteSchema.index({ room_invite_token: 1 });
 
 export const RoomInvite = mongoose.model<IRoomInvite>('RoomInvite', RoomInviteSchema);
