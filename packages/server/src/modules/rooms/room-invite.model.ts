@@ -12,8 +12,7 @@ export interface IRoomInvite extends Document {
 const RoomInviteSchema = new Schema<IRoomInvite>({
     room_id: {
         type: mongoose.Types.ObjectId,
-        ref: "Room",
-        required: true,
+        ref: "Room"
     },
     room_invite_token: {
         type: String,
