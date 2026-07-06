@@ -69,6 +69,14 @@ const getDiscussions = async (
 
     const userObjectId = userId ? new mongoose.Types.ObjectId(userId) : null;
 
+    // Check if user is blocked
+    if (userId) {
+        const isBlocked = room.blocked_users?.some((id) => id.toString() === userId);
+        if (isBlocked) {
+            throw new ApiError(403, "You are blocked from this room");
+        }
+    }
+
     // Check private room access
     if (room.access_type === AccessType.PRIVATE) {
         if (!userId) {
