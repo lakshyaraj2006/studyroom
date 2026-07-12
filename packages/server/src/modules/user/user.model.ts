@@ -23,6 +23,8 @@ export interface IUser extends Document {
     last_login?: Date;
     last_active?: Date;
     is_deleted?: Boolean;
+    providers: ("local" | "google")[];
+    googleProfileId: string;
     createdAt: Date;
     updatedAt: Date;
 
@@ -58,13 +60,16 @@ const UserSchema = new Schema<IUser>({
         trim: true
     },
     avatar: {
-        type: String
+        type: String,
+        default: ""
     },
     banner: {
-        type: String
+        type: String,
+        default: ""
     },
     bio: {
         type: String,
+        trim: true,
         maxlength: 160
     },
 
@@ -90,10 +95,12 @@ const UserSchema = new Schema<IUser>({
         default: false
     },
     verifyCode: {
-        type: String
+        type: String,
+        select: false
     },
     verifyCodeExpiry: {
-        type: Date
+        type: Date,
+        select: false
     },
     password: {
         type: String,
@@ -108,6 +115,15 @@ const UserSchema = new Schema<IUser>({
     is_deleted: {
         type: Boolean,
         default: false
+    },
+    providers: {
+        type: [String],
+        enum: ["local", "google"],
+        default: ["local"],
+    },
+    googleProfileId: {
+        type: String,
+        select: false
     }
 }, { timestamps: true });
 
@@ -139,18 +155,18 @@ UserSchema.methods.verifyPassword = async function (password: string) {
     return argon2.verify(this.password, password);
 };
 
-UserSchema.methods.generateAccessToken = function () {
+UserSchema.methods.generateAccessToken = function (): string {
     const secret = process.env.ACCESS_TOKEN_SECRET;
     if (!secret) throw new Error("ACCESS_TOKEN_SECRET is not set in .env");
 
     return jwt.sign(
-        { id: this._id, handle: this.handle },
+        { id: this._id, username: this.username, handle: this.handle },
         secret,
         { expiresIn: "15m" }
     );
 };
 
-UserSchema.methods.generateRefreshToken = function () {
+UserSchema.methods.generateRefreshToken = function (): string {
     const secret = process.env.REFRESH_TOKEN_SECRET;
     if (!secret) throw new Error("REFRESH_TOKEN_SECRET is not set in .env");
 

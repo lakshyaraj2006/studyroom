@@ -22,6 +22,8 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.10.4",
     "@types/nodemailer": "^7.0.9",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "tsc-alias": "^1.9.0",
@@ -40,6 +42,8 @@
     "multer": "^2.0.2",
     "nanoid": "^3.3.11",
     "nodemailer": "^7.0.12",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "socket.io": "^4.8.3",
     "tsconfig-paths": "^4.2.0"
   }

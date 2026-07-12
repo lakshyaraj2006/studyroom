@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userController } from "./user.controller";
 import { checkAuth } from "@/core/middlewares";
+import passport from "passport";
 
 const router = Router();
 
@@ -13,5 +14,15 @@ router.route("/change-email").post(checkAuth, userController.changeEmail);
 router.route("/rotate").post(userController.rotateAccessAndRefreshTokens);
 router.route("/forgot-password").post(userController.forgotPassword);
 router.route("/forgot-password-reset").post(userController.forgotPasswordReset);
+
+router.get("/google", passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+}));
+
+router.get(
+    "/google/callback",
+    userController.googleCallback
+);
 
 export { router as userRouter };
