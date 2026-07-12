@@ -10,7 +10,7 @@ export function passportConfig(passport: PassportStatic) {
             {
                 clientID: process.env.GOOGLE_CLIENT_ID!,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-                callbackURL: "/api/v1/users/google/callback",
+                callbackURL: process.env.GOOGLE_CALLBACK_URL,
             },
             async (req, _accessToken, _refreshToken, profile, done) => {
                 try {
