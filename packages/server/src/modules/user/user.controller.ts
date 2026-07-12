@@ -1,7 +1,10 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { ApiResponse } from "@/shared/utils/ApiResponse";
 import { userService } from "./user.service";
 import { asyncHandler } from "@/shared/utils/AsyncHandler";
+import passport from "passport";
+import { IUser } from "./user.model";
+import { ApiError } from "@/core/errors/ApiError";
 
 const createUser = asyncHandler(
     async (req: Request, res: Response) => {
@@ -133,4 +136,38 @@ const changeEmail = asyncHandler(
     }
 );
 
-export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail };
+export const googleCallback = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        passport.authenticate(
+            "google",
+            { session: false },
+            async (err, user: IUser | false) => {
+                if (err) return next(err);
+
+                if (!user) {
+                    return next(new ApiError(401, "Google authentication failed."));
+                }
+
+                const result = await userService.googleLogin(user);
+
+                res
+                    .cookie("refreshtoken", result.refreshToken, {
+                        maxAge: 30 * 24 * 60 * 60 * 1000,
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production"
+                    })
+                    .redirect(
+                        `${process.env.FRONTEND_URL}/auth/oauth-success` +
+                        `?success=true` +
+                        `&accessToken=${encodeURIComponent(result.accessToken)}` +
+                        `&id=${encodeURIComponent(result.id)}` +
+                        `&username=${encodeURIComponent(result.username)}` +
+                        `&handle=${encodeURIComponent(result.handle)}` +
+                        `&avatar=${encodeURIComponent(result.avatar ?? "")}`
+                    );
+            }
+        )(req, res, next);
+    }
+);
+
+export const userController = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail, googleCallback };

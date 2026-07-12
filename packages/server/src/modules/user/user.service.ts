@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { User } from "./user.model";
+import { IUser, User } from "./user.model";
 import { ApiError } from "@/core/errors/ApiError";
 import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { RefreshTokenPayloadType } from "@/shared/types/jwtPayloadCustom";
@@ -122,11 +122,11 @@ const verifyEmail = async (email: string, code: string) => {
 
         // check if entered email is valid or not
         if (!emailRegex.test(email)) {
-            throw new ApiError(400, "Invalid email address!");
+            throw new ApiError(400, "Invalid credentials!");
         }
         else {
             // check if the user exists with the username or email
-            let user = await User.findOne({ email: email.toLowerCase() });
+            let user = await User.findOne({ email: email.toLowerCase() }).select('+verifyCode +verifyCodeExpiry');
 
             // throw error if the user exists
             if (!user) {
@@ -179,8 +179,12 @@ const loginUser = async (identifier: string, password: string) => {
 
         // check if the match for the user was found or not
         if (!user) {
-            throw new ApiError(401, "Invalid username, email, or password");
+            throw new ApiError(401, "Invalid credentials!");
         } else {
+            if (!user.providers.includes("local")) {
+                throw new ApiError(409, "Password sign in is not enabled for this account.");
+            }
+
             // if the user was found, check for the password
             const isCorrectPassword = await user.verifyPassword(password);
 
@@ -192,7 +196,7 @@ const loginUser = async (identifier: string, password: string) => {
                 // return the access & refresh tokens
                 return { accessToken, refreshToken, id: user._id.toString(), username: user.username, avatar: user.avatar, handle: user.handle };
             } else {
-                throw new ApiError(401, "Invalid username, email, or password")
+                throw new ApiError(401, "Invalid credentials!")
             }
         }
     }
@@ -271,6 +275,13 @@ const forgotPassword = async (email: string) => {
                 // throw error if user is not found
                 throw new ApiError(404, "User not found!");
             } else {
+                if (!user.providers.includes("local")) {
+                    throw new ApiError(
+                        400,
+                        "This account doesn't use a password. Please continue with Google."
+                    );
+                }
+
                 // generate the verification code
                 const code = generateVerificationCode();
                 user.verifyCode = code;
@@ -384,4 +395,18 @@ const changeEmail = async (userId: string, newEmail: string) => {
     return true;
 };
 
-export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail };
+const googleLogin = async (user: IUser) => {
+    user.last_login = new Date();
+    await user.save();
+
+    return {
+        accessToken: user.generateAccessToken(),
+        refreshToken: user.generateRefreshToken(),
+        id: user._id.toString(),
+        username: user.username,
+        avatar: user.avatar,
+        handle: user.handle,
+    };
+};
+
+export const userService = { createUser, loginUser, logoutUser, rotateAccessAndRefreshTokens, forgotPassword, forgotPasswordReset, verifyEmail, resendVerificationCode, changeEmail, googleLogin };

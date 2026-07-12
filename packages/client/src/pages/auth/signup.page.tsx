@@ -11,6 +11,7 @@ import { AxiosError } from "axios";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
 import SEO from "@/components/seo.component";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 type LoadingAction = "signup" | "verify" | "resend" | null;
 
@@ -139,67 +140,71 @@ export default function SignUp() {
 
                 <CardContent className="space-y-4">
                     {mode === "signup" && (
-                        <form onSubmit={handleSignupSubmit} className="w-full space-y-4">
-                            <div className="space-y-1.5">
-                                <label htmlFor="name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</label>
-                                <Input name="name" id="name" placeholder="Name" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label htmlFor="username" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Username</label>
-                                <Input name="username" id="username" placeholder="Username" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</label>
-                                <Input name="email" id="email" type="email" placeholder="Email" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Password</label>
-                                <PasswordStrength
-                                    value={credentials.password}
-                                    onChange={(value) => {
-                                        setCredentials(prev => ({ ...prev, password: value }))
-                                    }}
-                                    showStrength
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label htmlFor="cpassword" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Confirm Password</label>
-                                <div className="relative">
-                                    <Input
-                                        type={showConfirmPassword ? "text" : "password"}
-                                        name="cpassword"
-                                        id="cpassword"
-                                        placeholder="Confirm Password"
-                                        onChange={handleChange}
-                                        className="rounded-xl border-border/50 pr-10 focus-visible:ring-primary focus-visible:border-primary transition-all"
-                                    />
-                                    <button
-                                        id="password-confirm-toggle-btn"
-                                        type="button"
-                                        onClick={() => setShowConfirmPassword(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                    >
-                                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
+                        <>
+                            <form onSubmit={handleSignupSubmit} className="w-full space-y-4">
+                                <div className="space-y-1.5">
+                                    <label htmlFor="name" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Name</label>
+                                    <Input name="name" id="name" placeholder="Name" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
                                 </div>
-                            </div>
 
-                            <Button
-                                id="signup-submit-btn"
-                                type="submit"
-                                className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300"
-                                disabled={loadingAction === "signup"}
-                            >
-                                {loadingAction === "signup"
-                                    ? <><Spinner /> Loading...</>
-                                    : <><LogInIcon size={16} /> Sign Up</>
-                                }
-                            </Button>
-                        </form>
+                                <div className="space-y-1.5">
+                                    <label htmlFor="username" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Username</label>
+                                    <Input name="username" id="username" placeholder="Username" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label htmlFor="email" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</label>
+                                    <Input name="email" id="email" type="email" placeholder="Email" onChange={handleChange} className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all" />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label htmlFor="password" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Password</label>
+                                    <PasswordStrength
+                                        value={credentials.password}
+                                        onChange={(value) => {
+                                            setCredentials(prev => ({ ...prev, password: value }))
+                                        }}
+                                        showStrength
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label htmlFor="cpassword" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">Confirm Password</label>
+                                    <div className="relative">
+                                        <Input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            name="cpassword"
+                                            id="cpassword"
+                                            placeholder="Confirm Password"
+                                            onChange={handleChange}
+                                            className="rounded-xl border-border/50 pr-10 focus-visible:ring-primary focus-visible:border-primary transition-all"
+                                        />
+                                        <button
+                                            id="password-confirm-toggle-btn"
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(v => !v)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    id="signup-submit-btn"
+                                    type="submit"
+                                    className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300"
+                                    disabled={loadingAction === "signup"}
+                                >
+                                    {loadingAction === "signup"
+                                        ? <><Spinner /> Loading...</>
+                                        : <><LogInIcon size={16} /> Sign Up</>
+                                    }
+                                </Button>
+                            </form>
+
+                            <GoogleLoginButton />
+                        </>
                     )}
 
                     {mode === "code" && (

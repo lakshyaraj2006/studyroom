@@ -4,6 +4,7 @@ import SignIn from "@/pages/auth/signin.page"
 import ForgotPassword from "@/pages/auth/forgot-password.page"
 import PersistLogin from "@/components/persist-login.component"
 import GuestRoutes from "@/components/guest-routes.component"
+import OAuthSuccess from "@/pages/auth/oauth-success.page"
 
 export const authRoutes: RouteObject[] = [
   {
@@ -14,6 +15,7 @@ export const authRoutes: RouteObject[] = [
         children: [
           { path: "signup", element: <SignUp /> },
           { path: "signin", element: <SignIn /> },
+          { path: "oauth-success", element: <OAuthSuccess /> },
         ]
       }
     ],

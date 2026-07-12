@@ -14,6 +14,8 @@ import { contactRouter } from "@/modules/contact/contact.route";
 import { initSocket } from "@/core/socket";
 
 import dns from "node:dns/promises";
+import { passportConfig } from "./core/config/passport";
+import passport from "passport";
 dns.setServers(['1.1.1.1', '8.8.8.8']);
 
 connectDB()
@@ -24,6 +26,8 @@ connectDB()
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
     app.use(cookieParser());
+
+    passportConfig(passport);
     
     app.use(cors({
         credentials: true,

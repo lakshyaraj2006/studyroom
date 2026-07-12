@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
 import SEO from "@/components/seo.component";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default function SignIn() {
     const { signin, setAuthToken, setUsrInfo } = useAuth();
@@ -85,12 +86,12 @@ export default function SignIn() {
                             <label htmlFor="identifier" className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Identifier
                             </label>
-                            <Input 
-                                type="text" 
-                                name="identifier" 
-                                id="identifier" 
-                                placeholder="Username or Email" 
-                                onChange={handleChange} 
+                            <Input
+                                type="text"
+                                name="identifier"
+                                id="identifier"
+                                placeholder="Username or Email"
+                                onChange={handleChange}
                                 className="rounded-xl border-border/50 focus-visible:ring-primary focus-visible:border-primary transition-all duration-200"
                             />
                         </div>
@@ -119,10 +120,10 @@ export default function SignIn() {
                                 </button>
                             </div>
                         </div>
-                        <Button 
+                        <Button
                             id="signin-submit-btn"
-                            type="submit" 
-                            className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300" 
+                            type="submit"
+                            className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-xl font-semibold shadow-md shadow-primary/10 hover:shadow-primary/25 active:scale-95 transition-all duration-300"
                             disabled={loading}
                         >
                             {
@@ -131,6 +132,8 @@ export default function SignIn() {
                             }
                         </Button>
                     </form>
+
+                    <GoogleLoginButton />
 
                     <div className="flex gap-6 w-full items-center justify-between mt-6 pt-4 border-t border-border/40 text-xs">
                         <Link id="forgot-password-link" to="/auth/forgot-password" className="text-muted-foreground hover:text-primary transition-colors flex gap-1.5 items-center">

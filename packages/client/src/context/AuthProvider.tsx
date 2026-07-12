@@ -17,6 +17,7 @@ export interface AuthContextType {
     resendCode: (email: string) => Promise<ServerResponse<null>>;
     forgotPassword: (email: string) => Promise<ServerResponse<null>>;
     forgotPasswordReset: (email: string, code: string, password: string, cpassword: string) => Promise<ServerResponse<null>>;
+    signInWithGoogle: () => void;
 }
 
 
@@ -88,6 +89,10 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         return response.data;
     };
 
+    const signInWithGoogle = () => {
+        window.location.href = `${import.meta.env.VITE_API_BASE_URL}/users/google`;
+    };
+
     const contextData: AuthContextType = {
         authToken,
         setAuthToken,
@@ -98,7 +103,8 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         forgotPassword,
         forgotPasswordReset,
         usrInfo,
-        setUsrInfo
+        setUsrInfo,
+        signInWithGoogle
     };
 
     return (
